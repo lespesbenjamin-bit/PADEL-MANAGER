@@ -135,7 +135,7 @@ export default function SessionPage() {
         )}>
           {isFuture && <p className="mb-2 rounded-xl bg-violet-50 p-2.5 text-xs text-violet-800">Séance à venir : tu peux préparer la feuille, la validation se fait normalement après la séance.</p>}
           <Card className="divide-y divide-slate-100">
-            {rows.length === 0 && <div className="p-4 text-sm text-slate-500">Aucun joueur dans ce groupe. Ajoute des membres ou un invité.</div>}
+            {rows.length === 0 && <div className="p-4 text-sm text-slate-500">Aucun joueur inscrit dans ce groupe. Tu peux quand même valider la séance (elle comptera dans le cycle), ou <Link href={`/groupes/${s.group_id}`} className="font-medium text-violet-700 underline">ajouter des joueurs au groupe</Link> / un invité.</div>}
             {rows.map((r) => {
               const proj = projected(r);
               return (
@@ -186,7 +186,7 @@ export default function SessionPage() {
               <Field label="Notes de séance"><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Thème travaillé, observations…" /></Field>
               <div className="sticky bottom-20 z-20 flex gap-2 md:bottom-4">
                 {isValidated && <Button variant="secondary" size="lg" onClick={() => { setEditing(false); setRows(data.sheet); }}>Annuler</Button>}
-                <Button size="lg" className="flex-1" onClick={() => setModal("recap")} disabled={rows.length === 0 && !isValidated}>
+                <Button size="lg" className="flex-1" onClick={() => setModal("recap")}>
                   <Check className="size-5" /> {isValidated ? "Enregistrer la correction" : "Valider la séance"}
                 </Button>
               </div>

@@ -3,13 +3,13 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Archive, ArrowLeft, ArrowRightLeft, CalendarDays, CalendarPlus, Clock, Pause, Pencil, Phone, Plus, RefreshCcw, Search, UserMinus, UserPlus,
+  Archive, ArrowLeft, ArrowRightLeft, CheckCheck, CalendarDays, CalendarPlus, Clock, Pause, Pencil, Phone, Plus, RefreshCcw, Search, UserMinus, UserPlus,
 } from "lucide-react";
 import * as api from "@/lib/api";
 import { addDaysISO, fmtDate, fmtDateLong, fmtRange, todayISO, weekdayName, WEEKDAYS } from "@/lib/dates";
 import { useAsync, useOpKey } from "@/lib/hooks";
 import { CYCLE_STATUS, GROUP_STATUS } from "@/lib/labels";
-import type { GroupOverview, Membership, PlayerStats } from "@/lib/types";
+import type { GroupOverview, Membership, PlayerStats, VSession } from "@/lib/types";
 import { AddSessionModal, ConfirmModal, GroupFormModal, PlayerFormModal, RenewCycleModal } from "@/components/forms";
 import { SessionRow } from "@/components/SessionRow";
 import {
@@ -28,7 +28,7 @@ export default function GroupDetail() {
   }, [id]);
 
   const [cycleId, setCycleId] = useState<string | null>(null);
-  const [modal, setModal] = useState<null | "edit" | "slot" | "session" | "renew" | "pause" | "archive" | "addMember" | "newPlayer">(null);
+  const [modal, setModal] = useState<null | "edit" | "slot" | "session" | "renew" | "pause" | "archive" | "addMember" | "newPlayer" | "bulk">(null);
   const [moving, setMoving] = useState<Membership | null>(null);
   const [removing, setRemoving] = useState<Membership | null>(null);
 
@@ -49,6 +49,7 @@ export default function GroupDetail() {
     };
   }, [data, cycle, today]);
 
+  const pendingList = useMemo(() => (data?.sessions ?? []).filter((s) => s.pending_validation), [data]);
   const balance = (pid: string) => data?.players.find((p) => p.id === pid)?.credits_balance ?? 0;
 
   if (loading && !data) return <Spinner />;
@@ -137,7 +138,9 @@ export default function GroupDetail() {
                 history.upcoming.map((s) => <SessionRow key={s.id} s={s} />)}
             </Card>
           </Section>
-          <Section title="Historique">
+          <Section title="Historique" actions={!archived && pendingList.length > 0 && (
+            <Button size="sm" variant="secondary" onClick={() => setModal("bulk")}><CheckCheck className="size-4" /> Tout valider ({pendingList.length})</Button>
+          )}>
             <Card className="divide-y divide-slate-100">
               {history.past.length === 0 ? <div className="p-4 text-sm text-slate-500">Aucune séance passée.</div> :
                 history.past.map((s) => <SessionRow key={s.id} s={s} />)}
@@ -218,6 +221,7 @@ export default function GroupDetail() {
         }}>
         {removing?.players?.first_name} {removing?.players?.last_name} sera retiré du groupe à compter d&apos;aujourd&apos;hui. Ses participations passées et ses crédits sont conservés.
       </ConfirmModal>
+      <BulkValidateModal open={modal === "bulk"} onClose={() => setModal(null)} sessions={pendingList} members={data.members} onDone={reload} />
       <MoveModal m={moving} onClose={() => setMoving(null)} groups={data.groups.filter((x) => x.id !== g.id && x.status !== "archived")} fromId={g.id} onSaved={reload} />
     </>
   );
@@ -347,6 +351,64 @@ function MoveModal({ m, onClose, groups, fromId, onSaved }: { m: Membership | nu
           </Select>
         </Field>
       )}
+    </Modal>
+  );
+}
+
+function BulkValidateModal({ open, onClose, sessions, members, onDone }: {
+  open: boolean; onClose: () => void; sessions: VSession[]; members: Membership[]; onDone: () => void;
+}) {
+  const toast = useToast();
+  const [allPresent, setAllPresent] = useState(true);
+  const [credit, setCredit] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(0);
+  const [keys, setKeys] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!open) return;
+    setDone(0);
+    setKeys(Object.fromEntries(sessions.map((s) => [s.id, api.newOpKey()])));
+  }, [open, sessions]);
+
+  async function run() {
+    setBusy(true);
+    let ok = 0;
+    try {
+      const list = [...sessions].sort((a, b) => a.session_date.localeCompare(b.session_date));
+      for (const s of list) {
+        const att: api.AttendanceInput[] = members.map((m) => ({
+          player_id: m.player_id, status: allPresent ? "present" : "unknown",
+          consume_credit: allPresent && credit, is_guest: false,
+        }));
+        await api.validateSession(keys[s.id], s.id, att, null, null);
+        ok++; setDone(ok);
+      }
+      toast(`${ok} séance(s) validée(s)`);
+      onDone(); onClose();
+    } catch (e) {
+      toast(`${ok} validée(s), puis erreur : ${errMsg(e)}`, "err");
+      onDone();
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <Modal open={open} onClose={() => !busy && onClose()} title={`Valider ${sessions.length} séance(s) passée(s)`}
+      footer={<><Button variant="ghost" onClick={onClose} disabled={busy}>Annuler</Button><Button variant="success" loading={busy} onClick={run}>
+        {busy ? `${done}/${sessions.length}…` : "Tout valider"}</Button></>}>
+      <div className="space-y-3 text-sm">
+        <p className="text-slate-600">Pratique pour rattraper un retard. Chaque séance est validée et comptée comme réalisée dans son cycle. Tu pourras corriger une séance précise ensuite (bouton « Corriger »).</p>
+        <ul className="max-h-40 overflow-y-auto rounded-xl bg-slate-50 p-2 text-xs text-slate-600">
+          {sessions.map((s) => <li key={s.id} className="py-0.5">{fmtDate(s.session_date, "EEE d MMM")} · {fmtRange(s.start_time, s.end_time)}{s.cycle_index ? ` · séance ${s.cycle_index}/${s.planned_sessions}` : ""}</li>)}
+        </ul>
+        {members.length === 0 ? (
+          <p className="rounded-xl bg-amber-50 p-3 text-amber-800">Aucun joueur inscrit : les séances seront validées sans feuille de présence.</p>
+        ) : (
+          <>
+            <label className="flex items-center gap-2"><input type="checkbox" className="size-4 accent-violet-600" checked={allPresent} onChange={(e) => setAllPresent(e.target.checked)} /> Marquer les {members.length} joueurs présents</label>
+            {allPresent && <label className="flex items-center gap-2"><input type="checkbox" className="size-4 accent-violet-600" checked={credit} onChange={(e) => setCredit(e.target.checked)} /> Décompter 1 crédit par joueur et par séance ({members.length * sessions.length} au total)</label>}
+          </>
+        )}
+      </div>
     </Modal>
   );
 }
