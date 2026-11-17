@@ -25,6 +25,7 @@ export function PlayerHome() {
 
   const { player, credits, groups, upcoming, history, packages } = data;
   const themes = all?.themes ?? {};
+  const toDebrief = (all?.tournaments ?? []).filter((t) => hub.needsDebrief(t, today));
   const nextTournaments = (all?.tournaments ?? []).filter((t) => t.status !== "cancelled" && (t.end_date ?? t.start_date) >= today).slice(0, 3);
   const next = upcoming.find((s) => s.status === "planned");
   const low = credits.balance <= 1;
@@ -35,6 +36,19 @@ export function PlayerHome() {
         <h1 className="text-2xl font-semibold tracking-tight">Salut {player.first_name} 👋</h1>
         <p className="text-sm capitalize text-slate-500">{fmtDate(today, "EEEE d MMMM")}</p>
       </div>
+
+      {toDebrief.length > 0 && (
+        <Link href="/tournois" className="mb-4 block">
+          <Card className="flex items-center gap-3 border-l-4 border-amber-400 p-4 hover:shadow-md">
+            <Trophy className="size-6 shrink-0 text-amber-500" />
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold">Débriefe ton tournoi</div>
+              <div className="truncate text-sm text-slate-500">{toDebrief.map((t) => t.name).join(", ")} : résultat et ressenti pour ton coach</div>
+            </div>
+            <span className="text-sm font-medium text-violet-700">Débriefer →</span>
+          </Card>
+        </Link>
+      )}
 
       {next && (
         <Card className="relative mb-5 overflow-hidden p-5">

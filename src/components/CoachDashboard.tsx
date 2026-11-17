@@ -151,6 +151,11 @@ export function CoachDashboard() {
 
               <Section title="Prochains tournois" actions={<Link href="/tournois" className="text-xs font-medium text-violet-700">Tous →</Link>}>
                 <Card className="divide-y divide-slate-100">
+                  {data.tournaments.filter((t) => t.debrief_at && !t.coach_reviewed_at).length > 0 && (
+                    <Link href="/tournois?tab=follow" className="flex items-center gap-2 bg-violet-50 p-3 text-sm font-medium text-violet-800">
+                      <Trophy className="size-4" />{data.tournaments.filter((t) => t.debrief_at && !t.coach_reviewed_at).length} débriefing(s) de tournoi à lire
+                    </Link>
+                  )}
                   {data.tournaments.filter((t) => t.coaching_status === "requested").length > 0 && (
                     <Link href="/tournois" className="flex items-center gap-2 bg-amber-50 p-3 text-sm font-medium text-amber-800">
                       <AlertTriangle className="size-4" />{data.tournaments.filter((t) => t.coaching_status === "requested").length} demande(s) d&apos;accompagnement à traiter

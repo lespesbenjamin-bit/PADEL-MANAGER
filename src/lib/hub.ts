@@ -13,7 +13,17 @@ export interface Tournament {
   goal: string | null; coaching_request: boolean; coaching_status: CoachingStatus; coach_note: string | null;
   result_rank: string | null; matches_played: number | null; wins: number | null; losses: number | null;
   player_comment: string | null; photos: string[]; created_at: string;
+  debrief_back_score: number | null; debrief_net_score: number | null; debrief_satisfaction: number | null;
+  debrief_difficulties: string | null; debrief_positives: string | null; debrief_at: string | null;
+  coach_feedback: string | null; coach_reviewed_at: string | null;
   player_first_name?: string; player_last_name?: string; player_level?: string | null;
+}
+
+export const SCORE_LABELS = ["", "À travailler", "Moyen", "Correct", "Bien", "Excellent"];
+export const SATISFACTION_EMOJI = ["", "😞", "😕", "😐", "🙂", "😁"];
+/** Tournoi passé (ou terminé) et non annulé, sans débriefing du joueur */
+export function needsDebrief(t: Pick<Tournament, "status" | "start_date" | "end_date" | "debrief_at">, today: string) {
+  return t.status !== "cancelled" && !t.debrief_at && (t.status === "done" || (t.end_date ?? t.start_date) < today);
 }
 
 export const TOURNAMENT_CATEGORIES = ["P25", "P50", "P100", "P250", "P500", "P1000", "P1500", "P2000"];
