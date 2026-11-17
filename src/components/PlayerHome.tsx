@@ -1,5 +1,6 @@
 "use client";
 import { LegendsSummaryCard } from "./Legends";
+import { WalletSummary } from "./Shop";
 import Link from "next/link";
 import { CalendarClock, MapPin, Megaphone, Repeat, Trophy, Wallet } from "lucide-react";
 import * as api from "@/lib/api";
@@ -38,7 +39,7 @@ export function PlayerHome() {
         <p className="text-sm capitalize text-slate-500">{fmtDate(today, "EEEE d MMMM")}</p>
       </div>
 
-      <div className="mb-4"><LegendsSummaryCard href="/legends" /></div>
+      <div className="mb-4 grid gap-3 lg:grid-cols-2"><LegendsSummaryCard href="/legends" /><WalletSummary /></div>
 
       {toDebrief.length > 0 && (
         <Link href="/tournois" className="mb-4 block">

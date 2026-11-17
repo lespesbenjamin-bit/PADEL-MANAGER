@@ -67,3 +67,15 @@ input[type="date"], input[type="time"] { min-height: 2.5rem; }
   main { padding: 0 !important; }
   .md\:pl-64 { padding-left: 0 !important; }
 }
+
+/* Padel Coins : gain de Coins (animation discrète) */
+@keyframes pch-coin-pop {
+  0% { opacity: 0; transform: translateY(6px) scale(.9); }
+  20% { opacity: 1; transform: translateY(0) scale(1.05); }
+  80% { opacity: 1; transform: translateY(-6px) scale(1); }
+  100% { opacity: 0; transform: translateY(-14px) scale(1); }
+}
+.pch-coin-pop { animation: pch-coin-pop 2.6s ease-out forwards; }
+@keyframes pch-coin-shine { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-12deg) scale(1.08); } }
+.pch-coin-shine { animation: pch-coin-shine 1.2s ease-in-out 2; }
+@media (prefers-reduced-motion: reduce) { .pch-coin-pop, .pch-coin-shine { animation: none; } }

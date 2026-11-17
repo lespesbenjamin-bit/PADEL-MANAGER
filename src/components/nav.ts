@@ -1,5 +1,5 @@
 import {
-  BookOpen, CalendarDays, Sparkles, Newspaper, ClipboardList, LayoutDashboard, LucideIcon, Megaphone, PenTool, RefreshCcw, Trophy, UserCircle, Users, UsersRound,
+  BookOpen, CalendarDays, Sparkles, ShoppingBag, Newspaper, ClipboardList, LayoutDashboard, LucideIcon, Megaphone, PenTool, RefreshCcw, Trophy, UserCircle, Users, UsersRound,
 } from "lucide-react";
 import type { Role } from "@/lib/types";
 
@@ -26,6 +26,7 @@ export const COACH_NAV: NavSection[] = [
   { title: "Compétition", items: [
     { href: "/tournois", label: "Tournois", short: "Tournois", icon: Trophy },
     { href: "/gamification", label: "Gamification", short: "Legends", icon: Sparkles },
+    { href: "/shop", label: "Shop & Coins", short: "Shop", icon: ShoppingBag },
   ] },
   { title: "Communauté", items: [
     { href: "/communaute", label: "Fil d'actualité", short: "Communauté", icon: Megaphone },
@@ -43,17 +44,18 @@ export const COACH_MOBILE = ["/", "/planning", "/groupes", "/joueurs"];
 export const PLAYER_NAV: NavSection[] = [
   { title: null, items: [
     { href: "/", label: "Fil d'actualité", short: "Fil", icon: Newspaper },
-    { href: "/mon-espace", label: "Mon espace", short: "Mon espace", icon: LayoutDashboard },
+    { href: "/mon-espace", label: "Mon espace", short: "Espace", icon: LayoutDashboard },
     { href: "/legends", label: "Padel Legends", short: "Legends", icon: Sparkles },
+    { href: "/shop", label: "Shop", short: "Shop", icon: ShoppingBag },
     { href: "/tournois", label: "Mes tournois", short: "Tournois", icon: Trophy },
     { href: "/exercices", label: "Exercices partagés", short: "Exercices", icon: BookOpen },
     { href: "/mon-profil", label: "Mon profil", short: "Profil", icon: UserCircle },
   ] },
 ];
-export const PLAYER_MOBILE = ["/", "/mon-espace", "/legends", "/tournois"];
+export const PLAYER_MOBILE = ["/", "/mon-espace", "/legends", "/shop", "/tournois"];
 
 /** Pages accessibles à un joueur (le reste est réservé au coach) */
-export const PLAYER_ALLOWED = ["/", "/mon-espace", "/tournois", "/communaute", "/exercices", "/mon-profil", "/rejoindre", "/legends"];
+export const PLAYER_ALLOWED = ["/", "/mon-espace", "/tournois", "/communaute", "/exercices", "/mon-profil", "/rejoindre", "/legends", "/shop"];
 
 export function navFor(role: Role) {
   return role === "coach" ? COACH_NAV : PLAYER_NAV;

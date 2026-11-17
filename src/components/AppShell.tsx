@@ -109,7 +109,7 @@ function Frame({ profile, children }: { profile: MyProfile; children: ReactNode 
       <ConsentGate role={profile.role} />
 
       {/* Navigation basse (mobile) */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      <nav style={{ gridTemplateColumns: `repeat(${mobile.length + 1}, minmax(0, 1fr))` }} className="fixed inset-x-0 bottom-0 z-40 grid border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         {mobile.map((n) => {
           const a = isActive(path, n.href);
           return (
