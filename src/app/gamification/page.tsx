@@ -2,8 +2,8 @@
 import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Check, Flame, Plus, RefreshCw, Trash2, Trophy } from "lucide-react";
-import { LevelChip, MascotArt, Ranking } from "@/components/Legends";
+import { Check, Flame, Plus, RefreshCw, Sparkles, Trash2, Trophy } from "lucide-react";
+import { LegendCard, LevelChip, Ranking } from "@/components/Legends";
 import { Badge, Button, Card, Checkbox, Empty, ErrorBox, Field, Input, Modal, PageHeader, Section, Segmented, Select, Spinner, StatTile, cx, errMsg, useToast } from "@/components/ui";
 import { useAsync, useOpKey } from "@/lib/hooks";
 import { fmtDate, timeAgo, todayISO } from "@/lib/dates";
@@ -28,11 +28,11 @@ function Gamification() {
   return (
     <div>
       <PageHeader title="Gamification" subtitle={<>Padel Legends{data && <> · {data.season.name} (jusqu&apos;au {fmtDate(data.season.ends_on, "d MMM")})</>}</>}
-        actions={<Button variant="secondary" loading={busy} onClick={async () => {
+        actions={<div className="flex gap-2"><Link href="/gamification/demo"><Button variant="secondary"><Sparkles className="size-4" /> Mode démo</Button></Link><Button variant="secondary" loading={busy} onClick={async () => {
           setBusy(true);
           try { const r = await L.recalculateAll(); toast(r.delta === 0 ? `Soldes vérifiés : tout est juste (${r.players} joueurs)` : `Recalcul effectué : ${r.delta > 0 ? "+" : ""}${r.delta} XP ajustés`); reload(); }
           catch (e) { toast(errMsg(e), "err"); } finally { setBusy(false); }
-        }}><RefreshCw className="size-4" /> Recalculer</Button>} />
+        }}><RefreshCw className="size-4" /> Recalculer</Button></div>} />
       <div className="-mx-1 mb-4 overflow-x-auto px-1 pb-1">
         <Segmented value={tab} onChange={(t) => router.replace(t === "overview" ? "/gamification" : `/gamification?tab=${t}`, { scroll: false })} options={[
           { value: "overview", label: "Vue d'ensemble" },
@@ -119,8 +119,8 @@ function LevelSpread({ d, levels }: { d: L.CoachOverview; levels: L.MascotLevel[
     <Card className="flex flex-wrap gap-3 p-4">
       {rows.map((l) => (
         <div key={l.level} className="flex items-center gap-2">
-          <MascotArt level={l} size="sm" />
-          <div className="text-xs"><div className="font-semibold">Niv. {l.level}</div><div className="text-slate-500">{counts.get(l.level)} joueur{counts.get(l.level)! > 1 ? "s" : ""}</div></div>
+          <LegendCard card={l} size="xs" />
+          <div className="text-xs"><div className="font-semibold">{l.status}</div><div className="text-slate-500">Niv. {l.level} · {counts.get(l.level)} joueur{counts.get(l.level)! > 1 ? "s" : ""}</div></div>
         </div>
       ))}
     </Card>
@@ -247,7 +247,7 @@ function Players({ d, levels }: { d: L.CoachOverview; levels: L.MascotLevel[] })
                 <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50">
                   <td className="px-4 py-2"><Link href={`/gamification/joueur/${p.id}`} className="font-medium text-slate-900 hover:text-violet-700">{p.first_name} {p.last_name}</Link>
                     {!p.linked && <span className="ml-1 text-xs text-slate-400">(sans accès)</span>}</td>
-                  <td className="px-2"><span className="flex items-center gap-1.5">{l && <span className="text-lg">{l.emoji}</span>}<LevelChip level={p.level} prestige={p.prestige} /></span></td>
+                  <td className="px-2"><span className="flex items-center gap-2">{l && <LegendCard card={l} size="xs" />}<span><LevelChip level={p.level} prestige={p.prestige} /><span className="block max-w-40 truncate text-xs text-slate-500">{l?.status}</span></span></span></td>
                   <td className="px-2 text-right font-semibold tabular-nums text-violet-700">{p.total_xp}</td>
                   <td className="px-2 text-right tabular-nums">{p.season_xp}</td>
                   <td className="px-2 text-right tabular-nums">{p.current_streak} <span className="text-xs text-slate-400">/ {p.best_streak}</span></td>

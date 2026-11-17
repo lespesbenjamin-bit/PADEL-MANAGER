@@ -79,3 +79,25 @@ input[type="date"], input[type="time"] { min-height: 2.5rem; }
 @keyframes pch-coin-shine { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-12deg) scale(1.08); } }
 .pch-coin-shine { animation: pch-coin-shine 1.2s ease-in-out 2; }
 @media (prefers-reduced-motion: reduce) { .pch-coin-pop, .pch-coin-shine { animation: none; } }
+
+/* Padel Legends — cartes de collection */
+.pch-card-shine::after, .pch-card-holo::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.35) 45%, transparent 60%);
+  background-size: 250% 250%; background-position: 100% 0; transition: background-position .8s ease;
+}
+.group:hover .pch-card-shine::after { background-position: 0 100%; }
+.pch-card-holo::after {
+  background: linear-gradient(115deg, rgba(255,0,128,.12), rgba(0,255,255,.18), rgba(255,255,0,.12), rgba(168,85,247,.2), rgba(255,0,128,.12));
+  background-size: 300% 300%; mix-blend-mode: overlay; animation: pch-holo 6s linear infinite;
+}
+@keyframes pch-holo { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+.pch-card-legend { animation: pch-legend-glow 3.5s ease-in-out infinite; }
+@keyframes pch-legend-glow { 0%, 100% { box-shadow: 0 0 0 rgba(251,191,36,0); } 50% { box-shadow: 0 0 22px rgba(217,70,239,.45); } }
+.pch-card-unlock { animation: pch-card-unlock 1.1s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes pch-card-unlock {
+  0% { opacity: 0; transform: perspective(700px) rotateY(90deg) scale(.7); }
+  60% { opacity: 1; transform: perspective(700px) rotateY(-8deg) scale(1.05); }
+  100% { transform: perspective(700px) rotateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .pch-card-holo::after, .pch-card-legend, .pch-card-unlock { animation: none; } }

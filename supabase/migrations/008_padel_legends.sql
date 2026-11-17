@@ -32,7 +32,7 @@ create table if not exists public.mascot_levels (
   mascot       text not null,
   slug         text not null unique,
   xp_required  int  not null unique,
-  rarity       text not null check (rarity in ('commun','peu_commun','rare','epique','legendaire','mythique')),
+  rarity       text not null,   -- contrôle des valeurs : voir migration 010
   emoji        text not null,
   description  text not null,
   image_url    text            -- illustration définitive (vide = image provisoire)
@@ -64,8 +64,7 @@ insert into public.mascot_levels(level, status, mascot, slug, xp_required, rarit
  (18,'Légendaire','Lion','lion',2450,'legendaire','🦁','Roi du court, respecté par tous les joueurs.'),
  (19,'Immortel','Griffon','griffon',2720,'legendaire','🪽','Mi-aigle mi-lion : il domine le ciel et le sol.'),
  (20,'Divinité du Padel','Oracle','oracle',3000,'mythique','🔮','Il voit le point avant qu''il ne soit joué. Le sommet de Padel Legends.')
-on conflict (level) do update set status = excluded.status, mascot = excluded.mascot, slug = excluded.slug,
-  xp_required = excluded.xp_required, rarity = excluded.rarity, emoji = excluded.emoji, description = excluded.description;
+on conflict (level) do nothing;   -- le contenu des cartes est géré par la migration 010
 
 create table if not exists public.badges (
   code            text primary key,
@@ -501,10 +500,10 @@ begin
   -- notifications de montée de niveau / prestige (pas lors de la toute première mise en place)
   if v_existed and coalesce(v_level, 1) > v_old.level then
     select * into v_lvl from public.mascot_levels where level = v_level;
-    perform app_private.notify(pl.owner_id, pl.user_id, 'legends_level', 'Niveau ' || v_level || ' atteint ! ' || v_lvl.emoji,
-      'Tu deviens ' || v_lvl.status || ' et débloques la mascotte ' || v_lvl.mascot || '.', '/legends');
+    perform app_private.notify(pl.owner_id, pl.user_id, 'legends_level', 'Nouvelle carte débloquée : ' || v_lvl.status,
+      'Niveau ' || v_level || ' atteint · « ' || v_lvl.description || ' »', '/legends');
   elsif v_existed and v_prest > v_old.prestige then
-    perform app_private.notify(pl.owner_id, pl.user_id, 'legends_level', 'Oracle ' || repeat('★', v_prest),
+    perform app_private.notify(pl.owner_id, pl.user_id, 'legends_level', 'L''Immortel du Padel ' || repeat('★', v_prest),
       'Nouvelle étoile Prestige débloquée !', '/legends');
   end if;
 

@@ -172,7 +172,7 @@ export function Segmented<T extends string>({ value, onChange, options }: {
     <div className="inline-flex rounded-xl bg-slate-100 p-1">
       {options.map((o) => (
         <button key={o.value} type="button" onClick={() => onChange(o.value)}
-          className={cx("rounded-lg px-3 py-1.5 text-sm font-medium transition",
+          className={cx("whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition",
             value === o.value ? "bg-white text-violet-700 shadow-sm" : "text-slate-600 hover:text-slate-900")}>
           {o.label}
         </button>

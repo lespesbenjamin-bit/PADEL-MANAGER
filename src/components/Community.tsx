@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { ConfirmModal } from "./forms";
 import { PhotoGrid } from "./Photos";
 import { UserAvatar as Avatar } from "./UserAvatar";
+import { AuthorBadge, AuthorFrame, SharedCard } from "./AuthorCard";
 import { Badge, Button, Card, cx, Empty, ErrorBox, errMsg, Input, Modal, PageHeader, Segmented, Select, Spinner, Textarea, useToast } from "./ui";
 
 const REACTION_LABEL: Record<string, string> = { "👍": "J'aime", "❤️": "J'adore", "🔥": "Top", "👏": "Bravo", "💪": "Force", "🎾": "Padel" };
@@ -277,10 +278,11 @@ function PostCard({ p, onChange }: { p: hub.FeedPost; onChange: () => void }) {
 
       {/* en-tête */}
       <div className="flex items-start gap-2.5 px-4 pt-3">
-        <Avatar name={p.author_name} path={p.author_avatar} coach={p.author_role === "coach"} />
+        <AuthorFrame userId={p.author_id} enabled={p.author_role !== "coach"}><Avatar name={p.author_name} path={p.author_avatar} coach={p.author_role === "coach"} /></AuthorFrame>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[15px] font-semibold">{p.author_name}</span>
+            <AuthorBadge userId={p.author_id} enabled={p.author_role !== "coach"} />
             {p.author_role === "coach" && <Badge className="bg-violet-50 text-violet-700 ring-violet-200"><ShieldCheck className="size-3" /> Coach</Badge>}
           </div>
           <div className="text-xs text-slate-500">{timeAgo(p.created_at)}{p.kind !== "message" && <> · {hub.POST_KINDS[p.kind].emoji} {hub.POST_KINDS[p.kind].label}</>}</div>
@@ -304,6 +306,7 @@ function PostCard({ p, onChange }: { p: hub.FeedPost; onChange: () => void }) {
 
       {/* contenu */}
       {p.body && <p className="whitespace-pre-wrap px-4 pt-2.5 text-[15px] leading-relaxed text-slate-800">{p.body}</p>}
+      {typeof (p.meta as { legend_level?: number })?.legend_level === "number" && <SharedCard level={(p.meta as { legend_level: number }).legend_level} />}
       {p.meta?.tournament && (
         <div className="mx-4 mt-3 flex items-center gap-3 rounded-xl bg-gradient-to-r from-violet-50 to-white p-3 ring-1 ring-violet-100">
           <Trophy className="size-6 text-amber-500" />

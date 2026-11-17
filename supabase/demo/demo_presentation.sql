@@ -1,5 +1,6 @@
 -- =====================================================================
 -- PADEL COACH HUB – ESPACE DE DÉMONSTRATION (coach + joueur)
+-- Nécessite les migrations 001 à 010 (cartes Padel Legends incluses).
 -- Crée un univers fictif complet, séparé de tes vraies données :
 --   • compte coach   : demo.coach@padelcoachhub.app
 --   • compte joueur  : demo.joueur@padelcoachhub.app  (= Lucas Martin)
@@ -203,6 +204,23 @@ begin
   -- 7. Padel Legends : recalcul complet (séances, séries, tournois, badges)
   -- -------------------------------------------------------------------
   perform public.gami_recalculate_all();
+
+  -- -------------------------------------------------------------------
+  -- 8. Padel Legends « La collection des 20 » : carte favorite, carte partagée, animation de déblocage
+  -- -------------------------------------------------------------------
+  update public.player_gamification_profiles
+     set favorite_level = case when level >= 5 then level - 1 end,   -- une ancienne carte affichée sur le profil
+         last_shared_level = level,
+         last_seen_level = level - 1                                  -- l'animation de la carte actuelle se jouera à la 1re connexion
+   where player_id = lucas;
+  perform set_config('request.jwt.claim.sub', v_user::text, true);
+  perform set_config('request.jwt.claims', json_build_object('sub', v_user, 'role', 'authenticated')::text, true);
+  insert into public.posts(owner_id, author_id, kind, body, meta, created_at)
+  select v_coach, v_user, 'podium', 'Lucas vient de débloquer ' || m.status || ' ! Niveau ' || m.level || ' atteint. 🃏',
+         jsonb_build_object('legend_level', m.level), now() - interval '1 day'
+  from public.player_gamification_profiles pg join public.mascot_levels m on m.level = pg.level where pg.player_id = lucas;
+  perform set_config('request.jwt.claim.sub', v_coach::text, true);
+  perform set_config('request.jwt.claims', json_build_object('sub', v_coach, 'role', 'authenticated')::text, true);
 
   raise notice 'Démo prête : coach % / joueur % (Lucas Martin)', c_email, j_email;
 end $$;

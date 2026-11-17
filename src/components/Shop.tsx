@@ -5,11 +5,22 @@ import Link from "next/link";
 import { Lock, PackageCheck, ShoppingBag, Sparkles, Star } from "lucide-react";
 import * as S from "@/lib/shop";
 import { signedUrls } from "@/lib/hub";
+import { displayedCardLevel, getPlayerSpace } from "@/lib/legends";
+import { LegendCard } from "./LegendCard";
 import { useAsync, useOpKey } from "@/lib/hooks";
 import { fmtDate, timeAgo } from "@/lib/dates";
 import { Badge, Button, Card, cx, Empty, errMsg, ErrorBox, Modal, Segmented, Select, Spinner, useToast } from "./ui";
 
 export type ShopTab = "shop" | "wallet" | "orders";
+
+/* Carte Padel Legends du joueur (favorite ou actuelle) : purement visuelle, sans lien avec les Coins */
+function MyLegendCard() {
+  const { data } = useAsync(() => getPlayerSpace().catch(() => null), []);
+  if (!data?.profile) return null;
+  const lv = displayedCardLevel(data.profile.level, data.profile.favorite_level);
+  const card = data.levels.find((l) => l.level === lv);
+  return card ? <Link href="/legends" title={card.status}><LegendCard card={card} size="xs" prestige={data.profile.prestige} /></Link> : null;
+}
 
 /* Petite pièce (icône maison, couleurs de l'appli) */
 export function CoinIcon({ className }: { className?: string }) {
@@ -62,7 +73,7 @@ export function WalletCard({ space, compact }: { space: S.ShopSpace; compact?: b
           </div>
           {gain > 0 && <div className="pch-coin-pop absolute left-28 top-6 rounded-full bg-amber-300 px-2 py-0.5 text-sm font-bold text-amber-950">+{gain}</div>}
         </div>
-        {compact && <Link href="/shop" className="rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium hover:bg-white/25">Boutique →</Link>}
+        {compact ? <Link href="/shop" className="rounded-xl bg-white/15 px-3 py-1.5 text-sm font-medium hover:bg-white/25">Boutique →</Link> : <MyLegendCard />}
       </div>
       {!compact && (
         <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
