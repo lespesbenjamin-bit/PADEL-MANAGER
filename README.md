@@ -96,3 +96,7 @@ npm run dev
 
 ## Évolutions prévues (architecture prête)
 Les accès aux données sont centralisés dans `src/lib/api.ts` et la logique métier dans les fonctions SQL : une connexion future au calendrier Académie, à la plateforme pédagogique, à la réservation ou à la facturation se branchera sans toucher aux écrans.
+
+## Espace de démonstration
+
+`supabase/demo/demo_presentation.sql` crée un univers fictif complet (coach `demo.coach@padelcoachhub.app`, joueur `demo.joueur@padelcoachhub.app` = Lucas Martin), séparé des vraies données. Créer d'abord les 2 comptes dans Supabase > Authentication > Users ; relancer le script remet la démo à zéro.
