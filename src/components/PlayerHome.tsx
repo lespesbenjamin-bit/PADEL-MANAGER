@@ -160,12 +160,12 @@ export function PlayerHome() {
             </Card>
           </Section>
 
-          <Section title="Communauté" actions={<Link href="/communaute" className="text-xs font-medium text-violet-700">Voir le fil →</Link>}>
+          <Section title="Communauté" actions={<Link href="/" className="text-xs font-medium text-violet-700">Voir le fil →</Link>}>
             <Card className="divide-y divide-slate-100">
               {(all?.feed ?? []).length === 0 ? (
-                <Link href="/communaute" className="flex items-center gap-2 p-3 text-sm text-slate-500 hover:bg-slate-50"><Megaphone className="size-4 text-violet-600" />Partage ta première publication</Link>
+                <Link href="/" className="flex items-center gap-2 p-3 text-sm text-slate-500 hover:bg-slate-50"><Megaphone className="size-4 text-violet-600" />Partage ta première publication</Link>
               ) : all!.feed.map((p) => (
-                <Link key={p.id} href="/communaute" className="block p-3 hover:bg-slate-50">
+                <Link key={p.id} href="/" className="block p-3 hover:bg-slate-50">
                   <div className="text-xs text-slate-500">{hub.POST_KINDS[p.kind].emoji} <b className="text-slate-700">{p.author_name}</b></div>
                   <div className="line-clamp-2 text-sm text-slate-700">{p.body || `${p.photos.length} photo(s)`}</div>
                 </Link>

@@ -1,5 +1,5 @@
 import {
-  BookOpen, CalendarDays, ClipboardList, LayoutDashboard, LucideIcon, Megaphone, PenTool, RefreshCcw, Trophy, UserCircle, Users, UsersRound,
+  BookOpen, CalendarDays, Newspaper, ClipboardList, LayoutDashboard, LucideIcon, Megaphone, PenTool, RefreshCcw, Trophy, UserCircle, Users, UsersRound,
 } from "lucide-react";
 import type { Role } from "@/lib/types";
 
@@ -41,17 +41,17 @@ export const COACH_MOBILE = ["/", "/planning", "/groupes", "/joueurs"];
 
 export const PLAYER_NAV: NavSection[] = [
   { title: null, items: [
-    { href: "/", label: "Mon espace", short: "Accueil", icon: LayoutDashboard },
+    { href: "/", label: "Fil d'actualité", short: "Fil", icon: Newspaper },
+    { href: "/mon-espace", label: "Mon espace", short: "Mon espace", icon: LayoutDashboard },
     { href: "/tournois", label: "Mes tournois", short: "Tournois", icon: Trophy },
-    { href: "/communaute", label: "Communauté", short: "Communauté", icon: Megaphone },
     { href: "/exercices", label: "Exercices partagés", short: "Exercices", icon: BookOpen },
     { href: "/mon-profil", label: "Mon profil", short: "Profil", icon: UserCircle },
   ] },
 ];
-export const PLAYER_MOBILE = ["/", "/tournois", "/communaute", "/mon-profil"];
+export const PLAYER_MOBILE = ["/", "/mon-espace", "/tournois", "/mon-profil"];
 
 /** Pages accessibles à un joueur (le reste est réservé au coach) */
-export const PLAYER_ALLOWED = ["/", "/tournois", "/communaute", "/exercices", "/mon-profil", "/rejoindre"];
+export const PLAYER_ALLOWED = ["/", "/mon-espace", "/tournois", "/communaute", "/exercices", "/mon-profil", "/rejoindre"];
 
 export function navFor(role: Role) {
   return role === "coach" ? COACH_NAV : PLAYER_NAV;

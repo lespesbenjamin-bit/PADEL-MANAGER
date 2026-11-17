@@ -143,10 +143,10 @@ export function Field({ label, hint, children, className }: { label: string; hin
 
 const inputCls = "w-full h-10 rounded-xl border-0 bg-white px-3 text-sm text-slate-900 ring-1 ring-slate-200 focus:ring-2 focus:ring-violet-500 outline-none";
 
-export function Input(p: React.InputHTMLAttributes<HTMLInputElement>) {
+export function Input(p: React.ComponentProps<"input">) {
   return <input {...p} className={cx(inputCls, p.className)} />;
 }
-export function Textarea(p: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function Textarea(p: React.ComponentProps<"textarea">) {
   return <textarea {...p} className={cx(inputCls, "h-auto min-h-20 py-2", p.className)} />;
 }
 export function Select({ children, ...p }: React.SelectHTMLAttributes<HTMLSelectElement>) {
