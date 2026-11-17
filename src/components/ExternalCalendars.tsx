@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { CalendarPlus, Check, Link2, Trash2 } from "lucide-react";
+import { CalendarPlus, Check, Copy, Link2, RefreshCw, Smartphone, Trash2 } from "lucide-react";
 import * as hub from "@/lib/hub";
 import { useAsync } from "@/lib/hooks";
 import { fmtDate } from "@/lib/dates";
@@ -97,5 +97,52 @@ function CalendarForm({ cal, onDone }: { cal: hub.ExternalCalendar | null; onDon
         <Button variant="ghost" onClick={onDone}>Annuler</Button>
       </div>
     </div>
+  );
+}
+
+/** Lien d'abonnement pour l'app Calendrier de l'iPhone (ou Google Agenda, Outlook…) */
+export function PhoneCalendarCard() {
+  const toast = useToast();
+  const { data, reload } = useAsync(() => hub.getCalendarFeed(), []);
+  const [busy, setBusy] = useState(false);
+  const https = data ? hub.feedUrl(data.token) : "";
+  const webcal = https.replace(/^https?:\/\//, "webcal://");
+  const create = async (again: boolean) => {
+    if (again && !window.confirm("Créer un nouveau lien ? L'ancien cessera de fonctionner : il faudra se réabonner sur chaque téléphone.")) return;
+    setBusy(true);
+    try { await hub.regenerateCalendarFeed(); await reload(); toast(again ? "Nouveau lien créé" : "Lien créé"); } catch (e) { toast(errMsg(e), "err"); } finally { setBusy(false); }
+  };
+  return (
+    <Card className="space-y-3 p-4">
+      <p className="text-sm text-slate-600">
+        Ajoute ton planning (collectifs <b>+ indivs</b>) dans l&apos;app <b>Calendrier</b> de ton iPhone. Il se met à jour tout seul ; les changements faits ici
+        y apparaissent après quelques minutes (selon le réglage « Nouvelles données » de l&apos;iPhone).
+      </p>
+      {!data ? (
+        <Button disabled={busy} onClick={() => create(false)}><Smartphone className="size-4" /> Créer mon lien d&apos;abonnement</Button>
+      ) : (
+        <>
+          <a href={webcal} className="flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-700">
+            <Smartphone className="size-4" /> Ajouter à l&apos;app Calendrier
+          </a>
+          <p className="text-xs text-slate-500">À ouvrir depuis l&apos;iPhone (Safari) : il propose directement « S&apos;abonner ».</p>
+          <div className="flex items-center gap-2">
+            <Input readOnly value={https} onFocus={(e) => e.currentTarget.select()} className="font-mono text-xs" />
+            <Button variant="secondary" aria-label="Copier le lien" onClick={async () => {
+              try { await navigator.clipboard.writeText(https); toast("Lien copié"); } catch { toast("Copie impossible : sélectionne le lien", "err"); }
+            }}><Copy className="size-4" /></Button>
+          </div>
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input type="checkbox" className="accent-violet-600" checked={data.include_external} onChange={async (e) => {
+              try { await hub.setFeedIncludeExternal(data.token, e.target.checked); await reload(); } catch (err) { toast(errMsg(err), "err"); }
+            }} /> Inclure les indivs des calendriers externes
+          </label>
+          <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800">
+            Ce lien donne accès à ton planning : ne le partage pas. Si tu l&apos;as diffusé par erreur, crée un nouveau lien.
+          </p>
+          <Button variant="ghost" disabled={busy} onClick={() => create(true)}><RefreshCw className="size-4" /> Créer un nouveau lien</Button>
+        </>
+      )}
+    </Card>
   );
 }

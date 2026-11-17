@@ -339,3 +339,14 @@ export function externalToSession(e: ExternalEvent): VSession {
     member_count: 1, present_count: 0, attendance_count: 0, pending_validation: false, location: e.location, external: e,
   };
 }
+
+/* ============================== Abonnement agenda (iPhone…) ============================== */
+export interface CalendarFeed { token: string; include_external: boolean }
+export async function getCalendarFeed(): Promise<CalendarFeed | null> {
+  return check(await supabase().from("calendar_feeds").select("token, include_external").maybeSingle());
+}
+export const regenerateCalendarFeed = () => rpc<string>("regenerate_calendar_feed", {});
+export async function setFeedIncludeExternal(token: string, v: boolean) {
+  return check(await supabase().from("calendar_feeds").update({ include_external: v }).eq("token", token));
+}
+export const feedUrl = (token: string) => `${window.location.origin}/api/agenda/${token}.ics`;
