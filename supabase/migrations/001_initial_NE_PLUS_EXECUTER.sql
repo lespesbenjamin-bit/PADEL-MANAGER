@@ -1,4 +1,19 @@
 -- =====================================================================
+-- ⚠️  NE PLUS EXÉCUTER CE FICHIER ⚠️
+-- Il a servi à créer la base au départ (3 novembre 2026).
+-- Il SUPPRIME puis recrée toutes les tables : le relancer effacerait
+-- tous les groupes, joueurs, séances et crédits.
+-- Il est conservé uniquement comme référence.
+-- Les évolutions passent par les fichiers 002, 003… (ajouts uniquement).
+-- =====================================================================
+-- Sécurité : arrêt immédiat si quelqu'un l'exécute quand même.
+do $$ begin
+  if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = 'groups') then
+    raise exception 'STOP : la base existe déjà. Ce fichier effacerait toutes les données. Utilise les migrations 002+.';
+  end if;
+end $$;
+
+-- =====================================================================
 -- PADEL GROUP MANAGER – by Ben
 -- Schéma complet Supabase (PostgreSQL 15+)
 -- À exécuter en une seule fois dans Supabase > SQL Editor > New query

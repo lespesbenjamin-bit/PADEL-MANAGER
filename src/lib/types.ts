@@ -17,6 +17,7 @@ export interface Group {
   notes: string | null;
   archived_at: string | null;
   created_at: string;
+  location?: string | null;
 }
 
 export interface GroupOverview extends Group {
@@ -93,6 +94,7 @@ export interface VSession {
   present_count: number;
   attendance_count: number;
   pending_validation: boolean;
+  location?: string | null;
 }
 
 export interface Player {
@@ -113,6 +115,10 @@ export interface PlayerStats extends Player {
   sessions_played: number;
   group_names: string[];
   packages_count: number;
+  user_id?: string | null;
+  invite_code?: string | null;
+  invited_at?: string | null;
+  linked_at?: string | null;
 }
 
 export interface Membership {
@@ -172,4 +178,22 @@ export interface Revision {
   };
   reason: string | null;
   created_at: string;
+}
+
+export type Role = "coach" | "player";
+export interface MyProfile {
+  id: string;
+  role: Role;
+  coach_id: string;
+  display_name: string | null;
+  player_id: string | null;
+}
+
+export interface PlayerSpace {
+  player: { id: string; first_name: string; last_name: string; phone: string | null; email: string | null; level: string | null };
+  credits: { balance: number; consumed: number; played: number };
+  groups: { id: string; name: string; level: string; weekday: number; start_time: string; end_time: string; location: string | null; color: string; status: GroupStatus; members: number }[];
+  upcoming: { id: string; session_date: string; start_time: string; end_time: string; status: SessionStatus; kind: SessionKind; rescheduled: boolean; original_date: string | null; group_name: string; group_level: string; location: string | null; color: string; is_guest: boolean }[];
+  history: { session_date: string; start_time: string; group_name: string; color: string; status: AttendanceStatus; consume_credit: boolean; is_guest: boolean }[];
+  packages: { label: string; total: number; purchased_on: string; expires_on: string | null; remaining: number }[];
 }

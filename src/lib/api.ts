@@ -1,8 +1,8 @@
 import { supabase } from "./supabase";
 import { todayISO } from "./dates";
 import type {
-  Attendance, AttendanceStatus, CreditTx, CycleStats, Group, GroupOverview, Membership,
-  PackageRow, Player, PlayerStats, Revision, SessionKind, VSession,
+  Attendance, AttendanceStatus, CreditTx, CycleStats, Group, GroupOverview, Membership, MyProfile,
+  PackageRow, Player, PlayerSpace, PlayerStats, Revision, SessionKind, VSession,
 } from "./types";
 
 /** Erreur lisible en français */
@@ -44,7 +44,7 @@ export async function getCycles(opts: { groupId?: string } = {}): Promise<CycleS
 export async function getSessions(opts: {
   from?: string; to?: string; groupId?: string; cycleId?: string; pendingOnly?: boolean;
 } = {}): Promise<VSession[]> {
-  let q = supabase().from("v_sessions").select("*").order("session_date").order("start_time");
+  let q = supabase().from("v_sessions_hub").select("*").order("session_date").order("start_time");
   if (opts.from) q = q.gte("session_date", opts.from);
   if (opts.to) q = q.lte("session_date", opts.to);
   if (opts.groupId) q = q.eq("group_id", opts.groupId);
@@ -54,7 +54,7 @@ export async function getSessions(opts: {
 }
 
 export async function getSession(id: string): Promise<VSession> {
-  return check(await supabase().from("v_sessions").select("*").eq("id", id).single());
+  return check(await supabase().from("v_sessions_hub").select("*").eq("id", id).single());
 }
 
 export async function getAttendances(sessionId: string): Promise<Attendance[]> {
@@ -116,6 +116,7 @@ export async function getParticipations(playerId: string): Promise<Participation
 
 export type GroupInput = Pick<Group, "name" | "level" | "weekday" | "start_time" | "end_time" | "capacity" | "color"> & {
   notes?: string | null;
+  location?: string | null;
 };
 
 export async function createGroup(g: GroupInput, cycle?: { planned: number; start: string; name?: string }) {
@@ -247,3 +248,18 @@ export const adjustCredits = (playerId: string, delta: number, note: string) =>
 
 export const seedDemo = () => rpc("seed_demo_data", {});
 export const deleteAllData = () => rpc("delete_all_my_data", {});
+
+/* ---------------------------- Rôles & espace joueur ---------------------------- */
+
+export const getMyProfile = () => rpc<MyProfile | null>("my_profile", {});
+export const getMyPlayerSpace = () => rpc<PlayerSpace | null>("get_my_player_space", {});
+export const createPlayerInvite = (playerId: string) => rpc<string>("create_player_invite", { p_player_id: playerId });
+export const claimPlayerInvite = (code: string) => rpc<{ first_name: string }>("claim_player_invite", { p_code: code });
+export const revokePlayerAccess = (playerId: string) => rpc("revoke_player_access", { p_player_id: playerId });
+export const updateMyProfile = (p: { first_name: string; last_name: string; phone: string; email: string }) =>
+  rpc("update_my_profile", { p_first_name: p.first_name, p_last_name: p.last_name, p_phone: p.phone, p_email: p.email });
+
+export const INVITE_STORAGE_KEY = "pch-invite-code";
+export function inviteLink(code: string) {
+  return `${typeof window !== "undefined" ? window.location.origin : ""}/rejoindre?code=${code}`;
+}

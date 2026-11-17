@@ -3,10 +3,10 @@ import "./globals.css";
 import { AppShell } from "@/components/AppShell";
 
 export const metadata: Metadata = {
-  title: "Padel Group Manager – by Ben",
-  description: "Pilotage des groupes collectifs, cycles et plannings – Ace Padel Club",
+  title: "Padel Coach Hub – by Ben",
+  description: "Coaching padel : groupes, planning, crédits, tournois et communauté",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Groupes Padel", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Coach Hub", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = { themeColor: "#7C3AED", width: "device-width", initialScale: 1, viewportFit: "cover" };

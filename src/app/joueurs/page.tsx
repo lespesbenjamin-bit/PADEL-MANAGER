@@ -42,7 +42,9 @@ export default function PlayersPage() {
             <Link key={p.id} href={`/joueurs/${p.id}`} className="flex items-center gap-3 p-3 hover:bg-slate-50">
               <div className="grid size-10 shrink-0 place-items-center rounded-full bg-violet-100 text-sm font-semibold text-violet-700">{p.first_name[0]}{p.last_name?.[0]}</div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium">{p.first_name} {p.last_name} {p.level && <span className="ml-1 text-xs font-normal text-slate-500">{p.level}</span>}</div>
+                <div className="truncate text-sm font-medium">{p.first_name} {p.last_name} {p.level && <span className="ml-1 text-xs font-normal text-slate-500">{p.level}</span>}
+                  {p.user_id && <span className="ml-1.5 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">espace actif</span>}
+                  {!p.user_id && p.invite_code && <span className="ml-1.5 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">invité</span>}</div>
                 <div className="truncate text-xs text-slate-500">{p.group_names.length ? p.group_names.join(" · ") : "Aucun groupe"} · {p.sessions_played} séance(s) jouée(s)</div>
               </div>
               <div className="text-right">

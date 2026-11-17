@@ -81,6 +81,8 @@ export default function PlayerPage() {
             </Card>
           </Section>
 
+          <PlayerAccessCard player={p} onChange={reload} />
+
           <Section title="Forfaits" actions={<div className="flex gap-1">
             <Button size="sm" variant="ghost" onClick={() => setModal("adjust")} title="Ajustement manuel"><SlidersHorizontal className="size-4" /></Button>
             <Button size="sm" variant="secondary" onClick={() => setModal("pack")}><Plus className="size-4" /> Forfait</Button>
@@ -207,5 +209,58 @@ function AdjustModal({ open, onClose, playerId, onSaved }: { open: boolean; onCl
         <Field label="Motif"><Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ex. séance offerte" /></Field>
       </div>
     </Modal>
+  );
+}
+
+function PlayerAccessCard({ player, onChange }: { player: import("@/lib/types").PlayerStats; onChange: () => void }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState(false);
+  const link = player.invite_code ? api.inviteLink(player.invite_code) : "";
+  const message = player.invite_code
+    ? `Salut ${player.first_name} ! Rejoins mon espace Padel Coach Hub pour suivre tes entraînements, tes crédits et tes tournois : ${link} (code : ${player.invite_code})`
+    : "";
+
+  async function generate() {
+    setBusy(true);
+    try { await api.createPlayerInvite(player.id); toast("Invitation créée"); onChange(); } catch (e) { toast(errMsg(e), "err"); } finally { setBusy(false); }
+  }
+  async function copy() {
+    try { await navigator.clipboard.writeText(message); toast("Message copié"); } catch { toast("Copie impossible : sélectionne le lien à la main", "err"); }
+  }
+
+  return (
+    <Section title="Espace joueur">
+      <Card className="p-3 text-sm">
+        {player.user_id ? (
+          <>
+            <div className="flex items-center gap-2"><span className="size-2 rounded-full bg-emerald-500" /><b>Compte relié</b></div>
+            <p className="mt-1 text-xs text-slate-500">{player.first_name} accède à son espace depuis le {player.linked_at ? fmtDate(player.linked_at.slice(0, 10), "d MMM yyyy") : "—"}.</p>
+            <Button size="sm" variant="ghost" className="mt-2 !px-0 text-rose-600" onClick={() => setConfirm(true)}>Retirer l&apos;accès</Button>
+          </>
+        ) : player.invite_code ? (
+          <>
+            <div className="flex items-center gap-2"><span className="size-2 rounded-full bg-amber-500" /><b>Invitation envoyée</b> <span className="text-xs text-slate-500">· en attente d&apos;inscription</span></div>
+            <div className="mt-2 rounded-xl bg-violet-50 p-2 text-center font-mono text-lg font-semibold tracking-widest text-violet-800">{player.invite_code}</div>
+            <p className="mt-1 break-all text-xs text-slate-500">{link}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Button size="sm" onClick={copy}>Copier le message</Button>
+              <a href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary">WhatsApp</Button></a>
+              <a href={`sms:${player.phone?.replace(/\s/g, "") ?? ""}?&body=${encodeURIComponent(message)}`}><Button size="sm" variant="secondary">SMS</Button></a>
+              <Button size="sm" variant="ghost" loading={busy} onClick={generate}>Nouveau code</Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-slate-600">{player.first_name} n&apos;a pas encore accès à son espace (entraînements, crédits, tournois, communauté).</p>
+            <Button size="sm" className="mt-2" loading={busy} onClick={generate}>Inviter {player.first_name}</Button>
+          </>
+        )}
+      </Card>
+      <ConfirmModal open={confirm} onClose={() => setConfirm(false)} title="Retirer l'accès" danger confirmLabel="Retirer l'accès"
+        onConfirm={async () => { try { await api.revokePlayerAccess(player.id); toast("Accès retiré"); setConfirm(false); onChange(); } catch (e) { toast(errMsg(e), "err"); } }}>
+        {player.first_name} ne pourra plus se connecter à son espace. Sa fiche, son historique et ses crédits sont conservés ; tu pourras l&apos;inviter de nouveau.
+      </ConfirmModal>
+    </Section>
   );
 }

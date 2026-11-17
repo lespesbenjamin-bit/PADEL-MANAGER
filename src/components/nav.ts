@@ -1,0 +1,63 @@
+import {
+  BookOpen, CalendarDays, ClipboardList, LayoutDashboard, LucideIcon, Megaphone, PenTool, RefreshCcw, Trophy, UserCircle, Users, UsersRound,
+} from "lucide-react";
+import type { Role } from "@/lib/types";
+
+export interface NavItem {
+  href: string;
+  label: string;
+  short: string;
+  icon: LucideIcon;
+  /** Étape de développement à laquelle le module arrive (absent = disponible) */
+  step?: number;
+}
+export interface NavSection { title: string | null; items: NavItem[] }
+
+export const COACH_NAV: NavSection[] = [
+  { title: null, items: [
+    { href: "/", label: "Tableau de bord", short: "Accueil", icon: LayoutDashboard },
+    { href: "/planning", label: "Planning", short: "Planning", icon: CalendarDays },
+  ] },
+  { title: "Collectif", items: [
+    { href: "/groupes", label: "Groupes", short: "Groupes", icon: UsersRound },
+    { href: "/cycles", label: "Cycles", short: "Cycles", icon: RefreshCcw },
+    { href: "/joueurs", label: "Joueurs & crédits", short: "Joueurs", icon: Users },
+  ] },
+  { title: "Compétition", items: [
+    { href: "/tournois", label: "Tournois", short: "Tournois", icon: Trophy, step: 4 },
+  ] },
+  { title: "Communauté", items: [
+    { href: "/communaute", label: "Fil d'actualité", short: "Communauté", icon: Megaphone, step: 5 },
+  ] },
+  { title: "Pédagogie", items: [
+    { href: "/exercices", label: "Exercices", short: "Exercices", icon: BookOpen, step: 6 },
+    { href: "/schemas", label: "Schémas tactiques", short: "Schémas", icon: PenTool, step: 6 },
+    { href: "/programmes", label: "Séances types", short: "Séances types", icon: ClipboardList, step: 7 },
+  ] },
+];
+
+/** Barre basse mobile du coach (le reste est dans « Plus ») */
+export const COACH_MOBILE = ["/", "/planning", "/groupes", "/joueurs"];
+
+export const PLAYER_NAV: NavSection[] = [
+  { title: null, items: [
+    { href: "/", label: "Mon espace", short: "Accueil", icon: LayoutDashboard },
+    { href: "/tournois", label: "Mes tournois", short: "Tournois", icon: Trophy, step: 4 },
+    { href: "/communaute", label: "Communauté", short: "Communauté", icon: Megaphone, step: 5 },
+    { href: "/exercices", label: "Exercices partagés", short: "Exercices", icon: BookOpen, step: 6 },
+    { href: "/mon-profil", label: "Mon profil", short: "Profil", icon: UserCircle },
+  ] },
+];
+export const PLAYER_MOBILE = ["/", "/tournois", "/communaute", "/mon-profil"];
+
+/** Pages accessibles à un joueur (le reste est réservé au coach) */
+export const PLAYER_ALLOWED = ["/", "/tournois", "/communaute", "/exercices", "/mon-profil", "/rejoindre"];
+
+export function navFor(role: Role) {
+  return role === "coach" ? COACH_NAV : PLAYER_NAV;
+}
+
+export function isActive(path: string, href: string) {
+  if (href === "/") return path === "/";
+  return path === href || path.startsWith(href + "/") || (href === "/planning" && path.startsWith("/seances"));
+}

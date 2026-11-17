@@ -15,7 +15,7 @@ export function GroupFormModal({ open, onClose, group, onSaved }: {
   const editing = Boolean(group);
   const [f, setF] = useState({
     name: "", level: "P100", customLevel: "", weekday: 1, start_time: "19:00", end_time: "20:30", capacity: 4,
-    color: GROUP_COLORS[0], notes: "", status: "active" as Group["status"],
+    color: GROUP_COLORS[0], notes: "", location: "", status: "active" as Group["status"],
     withCycle: true, planned: 10, customPlanned: 12, start: todayISO(), cycleName: "",
   });
   const [busy, setBusy] = useState(false);
@@ -27,10 +27,10 @@ export function GroupFormModal({ open, onClose, group, onSaved }: {
       setF((x) => ({
         ...x, name: group.name, level: std ? group.level : "custom", customLevel: std ? "" : group.level,
         weekday: group.weekday, start_time: group.start_time.slice(0, 5), end_time: group.end_time.slice(0, 5),
-        capacity: group.capacity, color: group.color, notes: group.notes ?? "", status: group.status, withCycle: false,
+        capacity: group.capacity, color: group.color, notes: group.notes ?? "", location: group.location ?? "", status: group.status, withCycle: false,
       }));
     } else {
-      setF((x) => ({ ...x, name: "", notes: "", status: "active", withCycle: true, start: todayISO() }));
+      setF((x) => ({ ...x, name: "", notes: "", location: "", status: "active", withCycle: true, start: todayISO() }));
     }
   }, [open, group]);
 
@@ -48,7 +48,7 @@ export function GroupFormModal({ open, onClose, group, onSaved }: {
     setBusy(true);
     try {
       const level = f.level === "custom" ? (f.customLevel.trim() || "Libre") : f.level;
-      const base = { name: f.name.trim(), level, capacity: Number(f.capacity), color: f.color, notes: f.notes || null };
+      const base = { name: f.name.trim(), level, capacity: Number(f.capacity), color: f.color, notes: f.notes || null, location: f.location.trim() || null };
       if (editing && group) {
         await api.updateGroup(group.id, { ...base, status: f.status === "archived" ? group.status : f.status });
         toast("Groupe mis à jour");
@@ -132,6 +132,7 @@ export function GroupFormModal({ open, onClose, group, onSaved }: {
             )}
           </div>
         )}
+        <Field label="Lieu / terrain (facultatif)"><Input value={f.location} onChange={(e) => setF({ ...f, location: e.target.value })} placeholder="Ex. Ace Padel Club – terrain 3" /></Field>
         <Field label="Notes"><Textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></Field>
       </div>
     </Modal>

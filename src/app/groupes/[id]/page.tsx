@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Archive, ArrowLeft, ArrowRightLeft, CheckCheck, CalendarDays, CalendarPlus, Clock, Pause, Pencil, Phone, Plus, RefreshCcw, Search, UserMinus, UserPlus,
+  Archive, ArrowLeft, ArrowRightLeft, CheckCheck, MapPin, CalendarDays, CalendarPlus, Clock, Pause, Pencil, Phone, Plus, RefreshCcw, Search, UserMinus, UserPlus,
 } from "lucide-react";
 import * as api from "@/lib/api";
 import { addDaysISO, fmtDate, fmtDateLong, fmtRange, todayISO, weekdayName, WEEKDAYS } from "@/lib/dates";
@@ -75,6 +75,7 @@ export default function GroupDetail() {
             </div>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
               <span className="inline-flex items-center gap-1.5"><Clock className="size-4 text-slate-400" /> {weekdayName(g.weekday)} · {fmtRange(g.start_time, g.end_time)}</span>
+              {g.location && <span className="inline-flex items-center gap-1.5"><MapPin className="size-4 text-slate-400" /> {g.location}</span>}
               <span>{g.member_count}/{g.capacity} joueurs</span>
             </div>
             {g.notes && <p className="mt-2 max-w-xl text-sm text-slate-500">{g.notes}</p>}

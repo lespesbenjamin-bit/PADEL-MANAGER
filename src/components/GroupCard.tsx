@@ -24,7 +24,7 @@ export function GroupCard({ g }: { g: GroupOverview }) {
             <div className="flex items-center gap-2">
               <h3 className="truncate font-semibold text-slate-900">{g.name}</h3>
             </div>
-            <div className="mt-0.5 text-sm text-slate-500">{weekdayName(g.weekday)} · {fmtRange(g.start_time, g.end_time)}</div>
+            <div className="mt-0.5 text-sm text-slate-500">{weekdayName(g.weekday)} · {fmtRange(g.start_time, g.end_time)}{g.location ? ` · ${g.location}` : ""}</div>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-1">
             <LevelBadge level={g.level} />

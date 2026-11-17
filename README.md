@@ -1,4 +1,19 @@
-# Padel Group Manager – by Ben
+# Padel Coach Hub – by Ben (ex-Padel Group Manager)
+
+> **Base de données : migrations uniquement additives.**
+> `supabase/migrations/001_initial_NE_PLUS_EXECUTER.sql` a créé la base au départ : ne plus jamais l'exécuter (il refuse désormais de tourner si la base existe).
+> Chaque évolution = un nouveau fichier `00X_….sql`, à exécuter une fois dans Supabase > SQL Editor, **avant** de déployer le code correspondant.
+>
+> | Migration | Contenu |
+> |---|---|
+> | 002_coach_hub_roles.sql | Rôles coach / joueur, invitations joueurs, espace joueur, lieu des groupes |
+>
+> **Comptes joueurs :** dans Supabase > Authentication > Sign In / Providers, « Allow new users to sign up » doit être **activé**.
+> Un compte créé sans code d'invitation valide n'a accès à aucune donnée (écran « Relie ton compte »).
+
+---
+
+## Historique : Padel Group Manager
 
 Application de pilotage des groupes collectifs (Ace Padel Club) : tableau de bord, groupes, cycles, planning semaine/mois, feuilles de présence, forfaits individuels.
 

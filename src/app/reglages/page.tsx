@@ -43,7 +43,7 @@ export default function SettingsPage() {
         </Card>
       </Section>
 
-      <p className="text-center text-xs text-slate-400">Padel Group Manager – by Ben · v1.0 · Fuseau horaire Europe/Paris</p>
+      <p className="text-center text-xs text-slate-400">Padel Coach Hub – by Ben · v2.0 (étape 2) · Fuseau horaire Europe/Paris</p>
 
       <ConfirmModal open={confirm} onClose={() => setConfirm(false)} title="Supprimer toutes les données" danger confirmLabel="Supprimer définitivement"
         onConfirm={async () => {
