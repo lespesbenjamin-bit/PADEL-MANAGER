@@ -6,10 +6,20 @@ import { fmtDate, fmtRange } from "@/lib/dates";
 import { SESSION_KIND, SESSION_STATUS, sessionDisplayStatus } from "@/lib/labels";
 import { Badge, cx } from "./ui";
 
+/** Lien vers la séance, ou simple bloc (avec infobulle) pour une séance de calendrier externe */
+export function SessionLink({ s, className, style, children }: { s: VSession; className?: string; style?: React.CSSProperties; children: React.ReactNode }) {
+  if (s.external) {
+    const e = s.external;
+    return <div className={cx(className, "cursor-default")} style={style}
+      title={`${e.title}\n${e.calendarName} · lecture seule${e.location ? `\n${e.location}` : ""}`}>{children}</div>;
+  }
+  return <Link href={`/seances/${s.id}`} className={className} style={style}>{children}</Link>;
+}
+
 export function SessionRow({ s, showGroup }: { s: VSession; showGroup?: boolean }) {
   const st = SESSION_STATUS[sessionDisplayStatus(s)];
   return (
-    <Link href={`/seances/${s.id}`} className={cx("flex items-center gap-3 p-3 transition hover:bg-slate-50", s.status === "cancelled" && "opacity-70")}>
+    <SessionLink s={s} className={cx("flex items-center gap-3 p-3 transition hover:bg-slate-50", s.status === "cancelled" && "opacity-70")}>
       <div className="w-12 shrink-0 text-center">
         <div className="text-[11px] font-medium uppercase text-slate-500">{fmtDate(s.session_date, "EEE")}</div>
         <div className="text-lg font-semibold leading-none tabular-nums">{fmtDate(s.session_date, "d")}</div>
@@ -30,8 +40,8 @@ export function SessionRow({ s, showGroup }: { s: VSession; showGroup?: boolean 
           {s.status === "validated" && <span>· {s.present_count} présent{s.present_count > 1 ? "s" : ""}</span>}
         </div>
       </div>
-      <Badge className={st.cls}>{st.label}</Badge>
+      {s.external ? <Badge className="bg-teal-50 text-teal-700 ring-teal-200">{s.group_level} · {s.external.calendarName}</Badge> : <Badge className={st.cls}>{st.label}</Badge>}
       <ChevronRight className="size-4 shrink-0 text-slate-300" />
-    </Link>
+    </SessionLink>
   );
 }

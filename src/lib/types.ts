@@ -95,6 +95,8 @@ export interface VSession {
   attendance_count: number;
   pending_validation: boolean;
   location?: string | null;
+  /** Séance venant d'un calendrier externe (BookMyCoach…), en lecture seule */
+  external?: import("./ical").ExternalEvent;
 }
 
 export interface Player {

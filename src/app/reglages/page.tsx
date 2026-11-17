@@ -8,6 +8,7 @@ import { ConfirmModal } from "@/components/forms";
 import { Button, Card, errMsg, Input, PageHeader, Section, useToast } from "@/components/ui";
 import { ThemePicker } from "@/components/AccountTools";
 import { AvatarEditor } from "@/components/UserAvatar";
+import { ExternalCalendarsCard } from "@/components/ExternalCalendars";
 import * as hub from "@/lib/hub";
 import { useRole } from "@/lib/role";
 
@@ -40,6 +41,12 @@ export default function SettingsPage() {
           <Button onClick={async () => { try { await hub.setDisplayName(name); await refresh(); toast("Nom mis à jour"); } catch (e) { toast(errMsg(e), "err"); } }}>Enregistrer</Button>
         </Card>
       </Section>
+
+      {profile.role === "coach" && (
+        <Section title="Calendriers externes">
+          <ExternalCalendarsCard />
+        </Section>
+      )}
 
       <Section title="Affichage">
         <Card className="p-4"><ThemePicker /></Card>

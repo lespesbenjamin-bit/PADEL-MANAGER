@@ -25,11 +25,12 @@ export function CoachDashboard() {
   const to = wk.end > mo.end ? wk.end : mo.end;
 
   const { data, error, loading, reload } = useAsync(async () => {
-    const [groups, memberships, sessions, pending, players, tournaments, feed] = await Promise.all([
+    const [groups, memberships, sessions, pending, players, tournaments, feed, ext] = await Promise.all([
       api.getGroups(), api.getActiveMemberships(), api.getSessions({ from, to }), api.getSessions({ pendingOnly: true }), api.getPlayers(),
       hub.getTournaments(true).catch(() => [] as hub.Tournament[]), hub.getFeed({ limit: 3 }).catch(() => [] as hub.FeedPost[]),
+      hub.getExternalEvents(from, to),
     ]);
-    return { groups, memberships, sessions, pending, players, tournaments, feed };
+    return { groups, memberships, sessions, pending, players, tournaments, feed, ext };
   }, [from, to]);
 
   const [fDay, setFDay] = useState("");
@@ -53,7 +54,8 @@ export function CoachDashboard() {
     const lowCredits = data.players.filter((p) => memberIds.has(p.id) && p.credits_balance <= 1).sort((a, b) => a.credits_balance - b.credits_balance);
     const activeMemberIds = players;
     const creditsLeft = data.players.filter((p) => activeMemberIds.has(p.id)).reduce((a, p) => a + Math.max(0, p.credits_balance), 0);
-    const weekAll = data.sessions.filter((s) => s.session_date >= wk.start && s.session_date <= wk.end && s.group_status !== "archived");
+    const weekAll = [...data.sessions.filter((s) => s.session_date >= wk.start && s.session_date <= wk.end && s.group_status !== "archived"),
+      ...data.ext.events.filter((e) => e.date >= wk.start && e.date <= wk.end).map(hub.externalToSession)];
     return { active, players: players.size, thisWeek, doneMonth, remaining, nearEnd, upcoming, lowCredits, creditsLeft, weekAll };
   }, [data, wk.start, wk.end, mo.start, mo.end, today]);
 

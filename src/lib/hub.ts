@@ -299,3 +299,43 @@ export async function getMyConsent(): Promise<string | null> {
   const r: { consent_at: string | null } | null = check(await supabase().from("profiles").select("consent_at").eq("id", uid!).maybeSingle());
   return r?.consent_at ?? null;
 }
+
+/* ============================== Calendriers externes (BookMyCoach…) ============================== */
+import type { ExternalEvent } from "./ical";
+import type { VSession } from "./types";
+
+export interface ExternalCalendar { id: string; name: string; url: string; color: string; filter: "all" | "individual" | "hide_collective"; enabled: boolean }
+
+export async function getExternalCalendars(): Promise<ExternalCalendar[]> {
+  return check(await supabase().from("external_calendars").select("id, name, url, color, filter, enabled").order("created_at")) ?? [];
+}
+export async function saveExternalCalendar(id: string | null, c: Partial<ExternalCalendar>) {
+  if (id) return check(await supabase().from("external_calendars").update(c).eq("id", id));
+  return check(await supabase().from("external_calendars").insert(c));
+}
+export async function deleteExternalCalendar(id: string) { return check(await supabase().from("external_calendars").delete().eq("id", id)); }
+
+async function callExternal(body: object) {
+  const token = (await supabase().auth.getSession()).data.session?.access_token;
+  const r = await fetch("/api/external-calendar", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error ?? `Erreur ${r.status}`);
+  return j;
+}
+export const testExternalCalendar = (url: string) =>
+  callExternal({ testUrl: url }) as Promise<{ count: number; first: string | null; last: string | null; individual: number; collective: number }>;
+export async function getExternalEvents(from: string, to: string): Promise<{ events: ExternalEvent[]; errors: { name: string; error: string }[] }> {
+  try { return await callExternal({ from, to }); } catch (e) { return { events: [], errors: [{ name: "Calendriers externes", error: e instanceof Error ? e.message : String(e) }] }; }
+}
+
+/** Présente une séance externe comme une séance du planning (lecture seule) */
+export function externalToSession(e: ExternalEvent): VSession {
+  return {
+    id: `ext:${e.uid}`, group_id: `ext:${e.calendarId}`, cycle_id: null, session_date: e.date, start_time: e.start, end_time: e.end,
+    status: "planned", kind: "exceptional", counts_in_cycle: false, original_date: null, rescheduled: false, cancel_reason: null,
+    notes: e.description, validated_at: null, version: 1, group_name: e.person ?? e.title,
+    group_level: e.category === "individual" ? "Indiv" : e.category === "collective" ? "Collectif" : "Cours",
+    capacity: 1, color: e.color, group_status: "active", cycle_number: null, cycle_name: null, planned_sessions: null, cycle_index: null,
+    member_count: 1, present_count: 0, attendance_count: 0, pending_validation: false, location: e.location, external: e,
+  };
+}

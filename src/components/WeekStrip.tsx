@@ -4,6 +4,7 @@ import type { VSession } from "@/lib/types";
 import { addDaysISO, fmtDate, fmtTime, WEEKDAYS_SHORT } from "@/lib/dates";
 import { SESSION_STATUS, sessionDisplayStatus } from "@/lib/labels";
 import { Card, cx } from "./ui";
+import { SessionLink } from "./SessionRow";
 
 /** Calendrier compact de la semaine pour le tableau de bord */
 export function WeekStrip({ start, today, sessions }: { start: string; today: string; sessions: VSession[] }) {
@@ -50,15 +51,15 @@ export function WeekStrip({ start, today, sessions }: { start: string; today: st
 function Chip({ s }: { s: VSession }) {
   const ds = sessionDisplayStatus(s);
   return (
-    <Link href={`/seances/${s.id}`}
+    <SessionLink s={s}
       className={cx("block rounded-lg border-l-[3px] px-2 py-1 text-[11px] leading-tight transition hover:shadow-sm",
-        ds === "cancelled" ? "bg-slate-50 text-slate-400 line-through" : ds === "validated" ? "bg-emerald-50 text-emerald-900" : ds === "pending" ? "bg-amber-50 text-amber-900" : "bg-violet-50 text-violet-950")}
+        s.external ? "border-dashed bg-teal-50 text-teal-900" : ds === "cancelled" ? "bg-slate-50 text-slate-400 line-through" : ds === "validated" ? "bg-emerald-50 text-emerald-900" : ds === "pending" ? "bg-amber-50 text-amber-900" : "bg-violet-50 text-violet-950")}
       style={{ borderLeftColor: s.color }}>
       <div className="flex items-center gap-1">
         <span className="tabular-nums opacity-70">{fmtTime(s.start_time)}</span>
         <span className={cx("ml-auto size-1.5 shrink-0 rounded-full", SESSION_STATUS[ds].dot)} />
       </div>
       <div className="truncate font-semibold">{s.group_name}</div>
-    </Link>
+    </SessionLink>
   );
 }

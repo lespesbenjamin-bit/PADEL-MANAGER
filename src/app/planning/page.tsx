@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Users } from "lucide-react";
 import * as api from "@/lib/api";
+import * as hub from "@/lib/hub";
 import {
   addDaysISO, addMonthsISO, fmtDate, fmtTime, monthGrid, monthRange, timeToMinutes, todayISO, weekRange, WEEKDAYS_SHORT,
 } from "@/lib/dates";
@@ -11,7 +12,7 @@ import { useAsync } from "@/lib/hooks";
 import { SESSION_STATUS, sessionDisplayStatus } from "@/lib/labels";
 import type { VSession } from "@/lib/types";
 import { AddSessionModal } from "@/components/forms";
-import { SessionRow } from "@/components/SessionRow";
+import { SessionLink, SessionRow } from "@/components/SessionRow";
 import { Button, Card, cx, ErrorBox, PageHeader, Segmented, Select, Spinner } from "@/components/ui";
 
 type View = "day" | "week" | "month" | "list";
@@ -29,6 +30,7 @@ function Planning() {
   const [groupId, setGroupId] = useState(params.get("group") || "");
   const [playerId, setPlayerId] = useState(params.get("player") || "");
   const [showCancelled, setShowCancelled] = useState(true);
+  const [showExternal, setShowExternal] = useState(true);
   const [adding, setAdding] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const today = todayISO();
@@ -38,15 +40,24 @@ function Planning() {
     : view === "day" ? { start: anchor, end: anchor } : weekRange(anchor);
 
   const { data, error, loading, reload } = useAsync(async () => {
-    const [sessions, groups, memberships, players] = await Promise.all([
-      api.getSessions({ from: range.start, to: range.end }), api.getGroups(), api.getActiveMemberships(), api.getPlayers()]);
-    return { sessions, groups, memberships, players };
+    const [sessions, groups, memberships, players, ext] = await Promise.all([
+      api.getSessions({ from: range.start, to: range.end }), api.getGroups(), api.getActiveMemberships(), api.getPlayers(),
+      hub.getExternalEvents(range.start, range.end)]);
+    return { sessions, groups, memberships, players, ext };
   }, [range.start, range.end]);
 
   const playerGroups = useMemo(() => new Set((data?.memberships ?? []).filter((m) => m.player_id === playerId).map((m) => m.group_id)), [data, playerId]);
-  const sessions = useMemo(() => (data?.sessions ?? []).filter((s) =>
-    (!groupId || s.group_id === groupId) && (!playerId || playerGroups.has(s.group_id)) &&
-    (showCancelled || s.status !== "cancelled")), [data, groupId, playerId, playerGroups, showCancelled]);
+  const playerName = useMemo(() => {
+    const p = (data?.players ?? []).find((x) => x.id === playerId);
+    return p ? `${p.first_name} ${p.last_name}`.trim().toLowerCase() : "";
+  }, [data, playerId]);
+  const sessions = useMemo(() => {
+    const own = (data?.sessions ?? []).filter((s) =>
+      (!groupId || s.group_id === groupId) && (!playerId || playerGroups.has(s.group_id)) && (showCancelled || s.status !== "cancelled"));
+    const ext = showExternal && !groupId ? (data?.ext.events ?? []).map(hub.externalToSession)
+      .filter((s) => !playerId || (s.external?.person ?? "").toLowerCase() === playerName) : [];
+    return [...own, ...ext].sort((a, b) => (a.session_date + a.start_time).localeCompare(b.session_date + b.start_time));
+  }, [data, groupId, playerId, playerGroups, playerName, showCancelled, showExternal]);
 
   const byDay = useMemo(() => {
     const m = new Map<string, VSession[]>();
@@ -89,9 +100,18 @@ function Planning() {
         <label className="flex items-center gap-1.5 text-xs text-slate-600">
           <input type="checkbox" className="accent-violet-600" checked={showCancelled} onChange={(e) => setShowCancelled(e.target.checked)} /> Annulées
         </label>
+        {(data?.ext.events.length ?? 0) + (data?.ext.errors.length ?? 0) > 0 && (
+          <label className="flex items-center gap-1.5 text-xs text-slate-600">
+            <input type="checkbox" className="accent-teal-600" checked={showExternal} onChange={(e) => setShowExternal(e.target.checked)} />
+            <span className="inline-block size-2 rounded-full bg-teal-500" /> Indivs ({data?.ext.events.length ?? 0})
+          </label>
+        )}
       </div>
 
       <Legend />
+      {data?.ext.errors.map((e) => (
+        <p key={e.name} className="mb-3 rounded-xl bg-amber-50 p-2.5 text-xs text-amber-800">Calendrier « {e.name} » indisponible : {e.error}</p>
+      ))}
 
       {loading && !data ? <Spinner /> : error ? <ErrorBox error={error} onRetry={reload} /> : (
         <>
@@ -194,9 +214,9 @@ function WeekGrid({ start, byDay, today, onAdd }: { start: string; byDay: Map<st
                     const p = pos.get(s.id)!;
                     const ds = sessionDisplayStatus(s);
                     return (
-                      <Link key={s.id} href={`/seances/${s.id}`}
+                      <SessionLink key={s.id} s={s}
                         className={cx("absolute overflow-hidden rounded-lg border-l-4 px-1.5 py-1 text-[11px] leading-tight shadow-sm transition hover:z-10 hover:shadow-md",
-                          ds === "cancelled" ? "bg-slate-50 text-slate-400 line-through" : ds === "validated" ? "bg-emerald-50 text-emerald-900" : ds === "pending" ? "bg-amber-50 text-amber-900" : "bg-violet-50 text-violet-950")}
+                          s.external ? "border-dashed bg-teal-50 text-teal-950" : ds === "cancelled" ? "bg-slate-50 text-slate-400 line-through" : ds === "validated" ? "bg-emerald-50 text-emerald-900" : ds === "pending" ? "bg-amber-50 text-amber-900" : "bg-violet-50 text-violet-950")}
                         style={{ top, height, left: `calc(${(p.col / p.cols) * 100}% + 2px)`, width: `calc(${100 / p.cols}% - 4px)`, borderLeftColor: s.color }}>
                         <div className="truncate font-semibold">{s.group_name}</div>
                         <div className="truncate opacity-80">{fmtTime(s.start_time)}–{fmtTime(s.end_time)} · {s.group_level}</div>
@@ -207,7 +227,7 @@ function WeekGrid({ start, byDay, today, onAdd }: { start: string; byDay: Map<st
                             <span className={cx("size-1.5 rounded-full", SESSION_STATUS[ds].dot)} />
                           </div>
                         )}
-                      </Link>
+                      </SessionLink>
                     );
                   })}
                 </div>
