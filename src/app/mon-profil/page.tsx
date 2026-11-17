@@ -7,6 +7,7 @@ import { useRole } from "@/lib/role";
 import { supabase } from "@/lib/supabase";
 import { Button, Card, ErrorBox, errMsg, Field, Input, PageHeader, Section, Spinner, useToast } from "@/components/ui";
 import { MyDataCard, ThemePicker } from "@/components/AccountTools";
+import { AvatarEditor } from "@/components/UserAvatar";
 
 export default function MyProfilePage() {
   const { email, refresh } = useRole();
@@ -26,6 +27,9 @@ export default function MyProfilePage() {
   return (
     <>
       <PageHeader title="Mon profil" subtitle={`Compte : ${email ?? ""}`} />
+      <Section title="Photo de profil">
+        <Card className="p-4"><AvatarEditor /></Card>
+      </Section>
       <Section title="Mes coordonnées">
         <Card className="space-y-3 p-4">
           <div className="grid grid-cols-2 gap-3">

@@ -7,6 +7,7 @@
 > | Migration | Contenu |
 > |---|---|
 > | 002_coach_hub_roles.sql | Rôles coach / joueur, invitations joueurs, espace joueur, lieu des groupes |
+> | 005_profile_photos.sql | Photos de profil (coach et joueurs) + nom complet affiché sur le fil |
 > | 004_tournament_debrief.sql | Débriefing des tournois (notes fond / devant / satisfaction, difficultés, points positifs) + retour du coach |
 > | 003_coach_hub_modules.sql | Tournois, communauté (+ stockage photos privé « community »), notifications, exercices, schémas tactiques, séances types, suppression de groupe, RGPD |
 >

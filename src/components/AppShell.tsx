@@ -12,6 +12,7 @@ import { COACH_MOBILE, isActive, navFor, NavItem, PLAYER_ALLOWED, PLAYER_MOBILE 
 import { Button, Card, cx, errMsg, Field, Input, ToastProvider } from "./ui";
 import { NotificationBell } from "./NotificationBell";
 import { ConsentGate } from "./AccountTools";
+import { UserAvatar } from "./UserAvatar";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -98,7 +99,7 @@ function Frame({ profile, children }: { profile: MyProfile; children: ReactNode 
         <div className="flex items-center gap-1"><NotificationBell />
         {profile.role === "coach"
           ? <Link href="/reglages" aria-label="Réglages" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><Settings className="size-5" /></Link>
-          : <Link href="/mon-profil" aria-label="Mon profil" className="grid size-8 place-items-center rounded-full bg-violet-100 text-xs font-semibold text-violet-700">{initials(profile.display_name)}</Link>}
+          : <Link href="/mon-profil" aria-label="Mon profil"><UserAvatar name={profile.display_name} path={profile.avatar_path} size="sm" /></Link>}
         </div>
       </header>
 

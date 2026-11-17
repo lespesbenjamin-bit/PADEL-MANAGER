@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { ConfirmModal } from "@/components/forms";
 import { Button, Card, errMsg, Input, PageHeader, Section, useToast } from "@/components/ui";
 import { ThemePicker } from "@/components/AccountTools";
+import { AvatarEditor } from "@/components/UserAvatar";
 import * as hub from "@/lib/hub";
 import { useRole } from "@/lib/role";
 
@@ -32,6 +33,7 @@ export default function SettingsPage() {
       </Section>
 
       <Section title="Profil public (communauté)">
+        <Card className="mb-2 p-4"><AvatarEditor /></Card>
         <Card className="flex flex-wrap items-end gap-2 p-4">
           <div className="min-w-56 flex-1"><div className="mb-1 text-sm font-medium text-slate-700">Nom affiché dans la communauté</div>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex. Coach Ben" /></div>

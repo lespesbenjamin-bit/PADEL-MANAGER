@@ -13,20 +13,10 @@ import { useRole } from "@/lib/role";
 import { supabase } from "@/lib/supabase";
 import { ConfirmModal } from "./forms";
 import { PhotoGrid } from "./Photos";
+import { UserAvatar as Avatar } from "./UserAvatar";
 import { Badge, Button, Card, cx, Empty, ErrorBox, errMsg, Input, Modal, PageHeader, Segmented, Select, Spinner, Textarea, useToast } from "./ui";
 
 const REACTION_LABEL: Record<string, string> = { "👍": "J'aime", "❤️": "J'adore", "🔥": "Top", "👏": "Bravo", "💪": "Force", "🎾": "Padel" };
-const initialsOf = (n: string | null | undefined) => (n || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("");
-
-function Avatar({ name, coach, size = "md" }: { name: string | null | undefined; coach?: boolean; size?: "sm" | "md" }) {
-  return (
-    <div className={cx("grid shrink-0 place-items-center rounded-full font-semibold",
-      size === "sm" ? "size-8 text-xs" : "size-10 text-sm", coach ? "bg-violet-600 text-white" : "bg-violet-100 text-violet-700")}>
-      {initialsOf(name)}
-    </div>
-  );
-}
-
 export function CommunityFeed({ home }: { home?: boolean }) {
   const { profile } = useRole();
   const isCoach = profile.role === "coach";
@@ -171,8 +161,13 @@ function Composer({ onPosted }: { onPosted: () => void }) {
 
   return (
     <Card className="mb-4 p-3">
+      {!profile.avatar_path && (
+        <Link href={isCoach ? "/reglages" : "/mon-profil"} className="mb-3 flex items-center gap-2 rounded-xl bg-violet-50 px-3 py-2 text-sm text-violet-800 hover:bg-violet-100">
+          <Camera className="size-4" /> Ajoute ta photo de profil pour que les autres te reconnaissent
+        </Link>
+      )}
       <div className="flex items-start gap-2.5">
-        <Avatar name={profile.display_name} coach={isCoach} />
+        <Avatar name={profile.display_name} path={profile.avatar_path} coach={isCoach} />
         {open ? (
           <Textarea ref={text} autoFocus value={body} onChange={(e) => setBody(e.target.value)}
             placeholder={isCoach ? "Partage une annonce, une info…" : `Quoi de neuf${first ? `, ${first}` : ""} ?`}
@@ -282,7 +277,7 @@ function PostCard({ p, onChange }: { p: hub.FeedPost; onChange: () => void }) {
 
       {/* en-tête */}
       <div className="flex items-start gap-2.5 px-4 pt-3">
-        <Avatar name={p.author_name} coach={p.author_role === "coach"} />
+        <Avatar name={p.author_name} path={p.author_avatar} coach={p.author_role === "coach"} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[15px] font-semibold">{p.author_name}</span>
@@ -368,7 +363,7 @@ function PostCard({ p, onChange }: { p: hub.FeedPost; onChange: () => void }) {
         )}
         {visibleComments.map((c) => (
           <div key={c.id} className={cx("group flex gap-2", c.hidden && "opacity-50")}>
-            <Avatar name={c.author_name} size="sm" />
+            <Avatar name={c.author_name} path={c.author_avatar} coach={c.author_role === "coach"} size="sm" />
             <div className="min-w-0">
               <div className="inline-block max-w-full rounded-2xl bg-slate-100 px-3 py-2">
                 <div className="text-[13px] font-semibold">{c.author_name}</div>
@@ -385,7 +380,7 @@ function PostCard({ p, onChange }: { p: hub.FeedPost; onChange: () => void }) {
         ))}
         {!p.hidden && (
           <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex items-center gap-2">
-            <Avatar name={profile.display_name} coach={isCoach} size="sm" />
+            <Avatar name={profile.display_name} path={profile.avatar_path} coach={isCoach} size="sm" />
             <div className="relative flex-1">
               <Input ref={commentInput} value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Écrire un commentaire…"
                 className="!h-9 !rounded-full !bg-slate-100 pr-10 !ring-0" />

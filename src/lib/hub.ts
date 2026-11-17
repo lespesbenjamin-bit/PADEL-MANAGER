@@ -96,6 +96,25 @@ export async function signedUrls(paths: string[]): Promise<Record<string, string
   return Object.fromEntries(paths.map((p) => [p, urlCache.get(p)?.url ?? ""]));
 }
 
+/** Photo de profil : recadrée au carré (400 px), envoyée dans le stockage privé puis enregistrée */
+export async function uploadAvatar(file: File, coachId: string, userId: string, previous?: string | null): Promise<string> {
+  const bmp = await createImageBitmap(file);
+  const side = Math.min(bmp.width, bmp.height);
+  const c = document.createElement("canvas"); c.width = 400; c.height = 400;
+  c.getContext("2d")!.drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, 400, 400);
+  const blob = await new Promise<Blob>((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("Image illisible"))), "image/jpeg", 0.88));
+  const path = `${coachId}/${userId}/avatar-${crypto.randomUUID()}.jpg`;
+  const { error } = await supabase().storage.from(BUCKET).upload(path, blob, { contentType: "image/jpeg", upsert: false });
+  if (error) throw new Error(error.message);
+  await rpc("set_avatar", { p_path: path });
+  if (previous) await removePhotos([previous]).catch(() => {});
+  return path;
+}
+export async function removeAvatar(previous: string | null | undefined) {
+  await rpc("set_avatar", { p_path: null });
+  if (previous) await removePhotos([previous]).catch(() => {});
+}
+
 export async function removePhotos(paths: string[]) {
   if (!paths.length) return;
   await supabase().storage.from(BUCKET).remove(paths);
@@ -112,9 +131,9 @@ export const POST_KINDS: Record<PostKind, { label: string; emoji: string }> = {
 };
 export const REACTIONS = ["👍", "🔥", "👏", "💪", "🎾", "❤️"] as const;
 
-export interface FeedComment { id: string; author_id: string; author_name: string; body: string; hidden: boolean; created_at: string }
+export interface FeedComment { id: string; author_id: string; author_name: string; author_avatar?: string | null; author_role?: "coach" | "player" | null; body: string; hidden: boolean; created_at: string }
 export interface FeedPost {
-  id: string; author_id: string; author_name: string; author_role: "coach" | "player" | null; kind: PostKind; body: string | null;
+  id: string; author_id: string; author_name: string; author_avatar?: string | null; author_role: "coach" | "player" | null; kind: PostKind; body: string | null;
   photos: string[]; meta: { tournament?: string; date?: string; category?: string; result?: string; record?: string };
   pinned: boolean; highlighted: boolean; hidden: boolean; created_at: string;
   reactions: Record<string, number>; my_reactions: string[]; comments: FeedComment[];

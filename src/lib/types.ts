@@ -186,6 +186,7 @@ export interface MyProfile {
   role: Role;
   coach_id: string;
   display_name: string | null;
+  avatar_path?: string | null;
   player_id: string | null;
 }
 
