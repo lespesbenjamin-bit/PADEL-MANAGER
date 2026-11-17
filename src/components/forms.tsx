@@ -15,7 +15,8 @@ export function GroupFormModal({ open, onClose, group, onSaved }: {
   const editing = Boolean(group);
   const [f, setF] = useState({
     name: "", level: "P100", customLevel: "", weekday: 1, start_time: "19:00", end_time: "20:30", capacity: 4,
-    color: GROUP_COLORS[0], notes: "", location: "", status: "active" as Group["status"],
+    color: GROUP_COLORS[0], notes: "", location: "", status: "active" as Group["status"], session_type: "collective" as "collective" | "individual",
+    typeLoaded: false,
     withCycle: true, planned: 10, customPlanned: 12, start: todayISO(), cycleName: "",
   });
   const [busy, setBusy] = useState(false);
@@ -27,10 +28,11 @@ export function GroupFormModal({ open, onClose, group, onSaved }: {
       setF((x) => ({
         ...x, name: group.name, level: std ? group.level : "custom", customLevel: std ? "" : group.level,
         weekday: group.weekday, start_time: group.start_time.slice(0, 5), end_time: group.end_time.slice(0, 5),
-        capacity: group.capacity, color: group.color, notes: group.notes ?? "", location: group.location ?? "", status: group.status, withCycle: false,
+        capacity: group.capacity, color: group.color, notes: group.notes ?? "", location: group.location ?? "", status: group.status, withCycle: false, typeLoaded: false,
       }));
+      api.getGroupSessionType(group.id).then((t) => setF((x) => ({ ...x, session_type: t, typeLoaded: true }))).catch(() => {});
     } else {
-      setF((x) => ({ ...x, name: "", notes: "", location: "", status: "active", withCycle: true, start: todayISO() }));
+      setF((x) => ({ ...x, name: "", notes: "", location: "", status: "active", withCycle: true, start: todayISO(), session_type: "collective", typeLoaded: true }));
     }
   }, [open, group]);
 
@@ -48,7 +50,8 @@ export function GroupFormModal({ open, onClose, group, onSaved }: {
     setBusy(true);
     try {
       const level = f.level === "custom" ? (f.customLevel.trim() || "Libre") : f.level;
-      const base = { name: f.name.trim(), level, capacity: Number(f.capacity), color: f.color, notes: f.notes || null, location: f.location.trim() || null };
+      const base = { name: f.name.trim(), level, capacity: Number(f.capacity), color: f.color, notes: f.notes || null, location: f.location.trim() || null,
+        ...(f.typeLoaded ? { session_type: f.session_type } : {}) };
       if (editing && group) {
         await api.updateGroup(group.id, { ...base, status: f.status === "archived" ? group.status : f.status });
         toast("Groupe mis à jour");
@@ -71,6 +74,12 @@ export function GroupFormModal({ open, onClose, group, onSaved }: {
       footer={<><Button variant="ghost" onClick={onClose}>Annuler</Button><Button onClick={save} loading={busy}>Enregistrer</Button></>}>
       <div className="space-y-4">
         <Field label="Nom du groupe"><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Ex. Perf P100 – Lundi" autoFocus /></Field>
+        <Field label="Type de séance" hint="Padel Legends : +20 XP en collectif, +25 XP en individuel (par défaut)">
+          <Select value={f.session_type} disabled={!f.typeLoaded} onChange={(e) => setF({ ...f, session_type: e.target.value as "collective" | "individual" })}>
+            <option value="collective">Collectif</option>
+            <option value="individual">Individuel (cours particulier suivi dans l&apos;appli)</option>
+          </Select>
+        </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Niveau">
             <Select value={f.level} onChange={(e) => setF({ ...f, level: e.target.value })}>

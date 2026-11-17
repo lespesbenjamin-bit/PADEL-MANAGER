@@ -1,4 +1,5 @@
 "use client";
+import { LegendsSummaryCard } from "@/components/Legends";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -82,6 +83,8 @@ export default function PlayerPage() {
           </Section>
 
           <PlayerAccessCard player={p} onChange={reload} />
+
+          <LegendsSummaryCard playerId={p.id} href={`/gamification/joueur/${p.id}`} />
 
           <Section title="Forfaits" actions={<div className="flex gap-1">
             <Button size="sm" variant="ghost" onClick={() => setModal("adjust")} title="Ajustement manuel"><SlidersHorizontal className="size-4" /></Button>

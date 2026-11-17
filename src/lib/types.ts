@@ -18,6 +18,8 @@ export interface Group {
   archived_at: string | null;
   created_at: string;
   location?: string | null;
+  /** Padel Legends : type de séance (XP collectif ou individuel) */
+  session_type?: "collective" | "individual";
 }
 
 export interface GroupOverview extends Group {

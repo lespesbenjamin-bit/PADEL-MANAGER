@@ -10,6 +10,7 @@
 > | 005_profile_photos.sql | Photos de profil (coach et joueurs) + nom complet affiché sur le fil |
 > | 006_external_calendars.sql | Calendriers externes (BookMyCoach…) : lien iCal privé du coach, indivs affichés dans le planning |
 > | 007_calendar_feed.sql | Abonnement agenda (iPhone, Google…) : lien secret du coach avec collectifs + indivs |
+> | 008_padel_legends.sql | Padel Legends : XP, niveaux et mascottes, badges, séries, tournois validés, saisons et classements (moteur côté serveur) |
 > | 004_tournament_debrief.sql | Débriefing des tournois (notes fond / devant / satisfaction, difficultés, points positifs) + retour du coach |
 > | 003_coach_hub_modules.sql | Tournois, communauté (+ stockage photos privé « community »), notifications, exercices, schémas tactiques, séances types, suppression de groupe, RGPD |
 >

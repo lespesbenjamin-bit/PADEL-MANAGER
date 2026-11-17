@@ -1,4 +1,5 @@
 "use client";
+import { LegendsSummaryCard } from "./Legends";
 import Link from "next/link";
 import { CalendarClock, MapPin, Megaphone, Repeat, Trophy, Wallet } from "lucide-react";
 import * as api from "@/lib/api";
@@ -36,6 +37,8 @@ export function PlayerHome() {
         <h1 className="text-2xl font-semibold tracking-tight">Salut {player.first_name} 👋</h1>
         <p className="text-sm capitalize text-slate-500">{fmtDate(today, "EEEE d MMMM")}</p>
       </div>
+
+      <div className="mb-4"><LegendsSummaryCard href="/legends" /></div>
 
       {toDebrief.length > 0 && (
         <Link href="/tournois" className="mb-4 block">

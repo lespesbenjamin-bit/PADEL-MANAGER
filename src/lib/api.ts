@@ -117,7 +117,14 @@ export async function getParticipations(playerId: string): Promise<Participation
 export type GroupInput = Pick<Group, "name" | "level" | "weekday" | "start_time" | "end_time" | "capacity" | "color"> & {
   notes?: string | null;
   location?: string | null;
+  session_type?: "collective" | "individual";
 };
+
+/** Type de séance d'un groupe (lu dans la table, la vue ne l'expose pas) */
+export async function getGroupSessionType(id: string): Promise<"collective" | "individual"> {
+  const r = await supabase().from("groups").select("session_type").eq("id", id).maybeSingle();
+  return (r.data as { session_type?: "collective" | "individual" } | null)?.session_type ?? "collective";
+}
 
 export async function createGroup(g: GroupInput, cycle?: { planned: number; start: string; name?: string }) {
   const row: Group = check(await supabase().from("groups").insert(g).select().single());

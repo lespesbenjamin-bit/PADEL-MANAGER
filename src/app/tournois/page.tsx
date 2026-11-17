@@ -1,9 +1,10 @@
 "use client";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import {
   CalendarDays, CheckCheck, ChevronLeft, ChevronRight, ClipboardList, Handshake, LayoutDashboard, List, MapPin, Medal, MessageSquareText,
-  Plus, ThumbsUp, TriangleAlert, Trophy, Users,
+  Plus, ThumbsUp, TriangleAlert, Sparkles, Trophy, Users,
 } from "lucide-react";
 import * as api from "@/lib/api";
 import * as hub from "@/lib/hub";
@@ -596,6 +597,11 @@ function TournamentDetail({ t, isCoach, today, onClose, onEdit, onDebrief, onCha
             </>
           )}
 
+          {isCoach && t.status !== "cancelled" && t.start_date <= today && (
+            <Link href="/gamification?tab=tournaments" className="flex items-center gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 hover:bg-amber-100">
+              <Sparkles className="size-4 text-amber-600" /> Padel Legends : valider ou corriger le résultat pour attribuer les XP →
+            </Link>
+          )}
           {isCoach && t.debrief_at && (
             <div className="rounded-xl bg-violet-50/70 p-3">
               <Field label="Mon retour au joueur" hint="Le joueur reçoit une notification et le voit sur son tournoi.">
