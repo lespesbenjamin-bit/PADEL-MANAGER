@@ -6,6 +6,7 @@ import { useAsync } from "@/lib/hooks";
 import { useRole } from "@/lib/role";
 import { supabase } from "@/lib/supabase";
 import { Button, Card, ErrorBox, errMsg, Field, Input, PageHeader, Section, Spinner, useToast } from "@/components/ui";
+import { MyDataCard, ThemePicker } from "@/components/AccountTools";
 
 export default function MyProfilePage() {
   const { email, refresh } = useRole();
@@ -40,6 +41,10 @@ export default function MyProfilePage() {
         </Card>
         <p className="mt-2 text-xs text-slate-500">Ton niveau, tes groupes et tes crédits sont gérés par ton coach.</p>
       </Section>
+      <Section title="Affichage">
+        <Card className="p-4"><ThemePicker /></Card>
+      </Section>
+      <Section title="Mes données (RGPD)"><MyDataCard /></Section>
       <Section title="Compte">
         <Card className="p-4">
           <Button variant="secondary" onClick={() => supabase().auth.signOut()}><LogOut className="size-4" /> Se déconnecter</Button>

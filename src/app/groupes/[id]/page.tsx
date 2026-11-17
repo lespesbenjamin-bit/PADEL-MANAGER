@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Archive, ArrowLeft, ArrowRightLeft, CheckCheck, MapPin, CalendarDays, CalendarPlus, Clock, Pause, Pencil, Phone, Plus, RefreshCcw, Search, UserMinus, UserPlus,
+  Archive, ArrowLeft, ArrowRightLeft, CheckCheck, MapPin, Trash2, CalendarDays, CalendarPlus, Clock, Pause, Pencil, Phone, Plus, RefreshCcw, Search, UserMinus, UserPlus,
 } from "lucide-react";
 import * as api from "@/lib/api";
 import { addDaysISO, fmtDate, fmtDateLong, fmtRange, todayISO, weekdayName, WEEKDAYS } from "@/lib/dates";
@@ -28,7 +28,7 @@ export default function GroupDetail() {
   }, [id]);
 
   const [cycleId, setCycleId] = useState<string | null>(null);
-  const [modal, setModal] = useState<null | "edit" | "slot" | "session" | "renew" | "pause" | "archive" | "addMember" | "newPlayer" | "bulk">(null);
+  const [modal, setModal] = useState<null | "edit" | "slot" | "session" | "renew" | "pause" | "archive" | "addMember" | "newPlayer" | "bulk" | "delete">(null);
   const [moving, setMoving] = useState<Membership | null>(null);
   const [removing, setRemoving] = useState<Membership | null>(null);
 
@@ -90,6 +90,7 @@ export default function GroupDetail() {
             <Link href={`/planning?group=${g.id}`}><Button size="sm" variant="secondary"><CalendarDays className="size-4" /> Planning</Button></Link>
             <Button size="sm" onClick={() => setModal("renew")}><RefreshCcw className="size-4" /> {latestCycle ? "Renouveler le cycle" : "Créer un cycle"}</Button>
             <Button size="sm" variant="ghost" onClick={() => setModal("archive")}><Archive className="size-4" /> Archiver</Button>
+            <Button size="sm" variant="ghost" className="text-rose-600" onClick={() => setModal("delete")}><Trash2 className="size-4" /> Supprimer</Button>
           </div>
         )}
       </Card>
@@ -215,6 +216,12 @@ export default function GroupDetail() {
           try { await api.archiveGroup(g.id); toast("Groupe archivé"); router.push("/groupes"); } catch (e) { toast(errMsg(e), "err"); }
         }}>
         Le groupe et tout son historique (cycles, séances, présences) sont conservés. Les séances futures non validées seront annulées.
+      </ConfirmModal>
+      <ConfirmModal open={modal === "delete"} onClose={() => setModal(null)} title="Supprimer le groupe" danger confirmLabel="Supprimer définitivement"
+        onConfirm={async () => {
+          try { await api.deleteGroup(g.id); toast("Groupe supprimé"); router.push("/groupes"); } catch (e) { toast(errMsg(e), "err"); setModal(null); }
+        }}>
+        Suppression définitive du groupe, de ses cycles et de ses séances prévues. Impossible si le groupe a déjà des séances validées : dans ce cas, archive-le pour garder l&apos;historique.
       </ConfirmModal>
       <ConfirmModal open={!!removing} onClose={() => setRemoving(null)} title="Retirer du groupe" confirmLabel="Retirer" danger
         onConfirm={async () => {

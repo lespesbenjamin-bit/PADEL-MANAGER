@@ -6,7 +6,7 @@ import type {
 } from "./types";
 
 /** Erreur lisible en français */
-function check<T>(res: { data: T | null; error: { message: string } | null }): T {
+export function check<T>(res: { data: T | null; error: { message: string } | null }): T {
   if (res.error) throw new Error(res.error.message);
   return res.data as T;
 }
@@ -17,7 +17,7 @@ export const newOpKey = () =>
     : "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) =>
         (Number(c) ^ (Math.random() * 16) >> (Number(c) / 4)).toString(16));
 
-async function rpc<T = unknown>(fn: string, args: Record<string, unknown>): Promise<T> {
+export async function rpc<T = unknown>(fn: string, args: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase().rpc(fn, args);
   if (error) throw new Error(error.message);
   return data as T;
@@ -130,6 +130,7 @@ export async function updateGroup(id: string, patch: Partial<Group>) {
 }
 
 export const archiveGroup = (id: string) => rpc("archive_group", { p_group_id: id });
+export const deleteGroup = (id: string) => rpc("delete_group", { p_group_id: id });
 
 export async function addMember(groupId: string, playerId: string) {
   return check(await supabase().from("group_memberships")

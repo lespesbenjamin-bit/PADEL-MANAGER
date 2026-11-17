@@ -14,7 +14,7 @@ import { AddSessionModal } from "@/components/forms";
 import { SessionRow } from "@/components/SessionRow";
 import { Button, Card, cx, ErrorBox, PageHeader, Segmented, Select, Spinner } from "@/components/ui";
 
-type View = "week" | "month" | "list";
+type View = "day" | "week" | "month" | "list";
 const HOUR_PX = 52;
 
 export default function PlanningPage() {
@@ -27,6 +27,7 @@ function Planning() {
   const [view, setView] = useState<View>((params.get("v") as View) || "week");
   const [anchor, setAnchor] = useState(params.get("d") || todayISO());
   const [groupId, setGroupId] = useState(params.get("group") || "");
+  const [playerId, setPlayerId] = useState(params.get("player") || "");
   const [showCancelled, setShowCancelled] = useState(true);
   const [adding, setAdding] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
@@ -34,15 +35,18 @@ function Planning() {
 
   const range = view === "month"
     ? (() => { const g = monthGrid(anchor); return { start: g[0], end: g[g.length - 1] }; })()
-    : weekRange(anchor);
+    : view === "day" ? { start: anchor, end: anchor } : weekRange(anchor);
 
   const { data, error, loading, reload } = useAsync(async () => {
-    const [sessions, groups] = await Promise.all([api.getSessions({ from: range.start, to: range.end }), api.getGroups()]);
-    return { sessions, groups };
+    const [sessions, groups, memberships, players] = await Promise.all([
+      api.getSessions({ from: range.start, to: range.end }), api.getGroups(), api.getActiveMemberships(), api.getPlayers()]);
+    return { sessions, groups, memberships, players };
   }, [range.start, range.end]);
 
+  const playerGroups = useMemo(() => new Set((data?.memberships ?? []).filter((m) => m.player_id === playerId).map((m) => m.group_id)), [data, playerId]);
   const sessions = useMemo(() => (data?.sessions ?? []).filter((s) =>
-    (!groupId || s.group_id === groupId) && (showCancelled || s.status !== "cancelled")), [data, groupId, showCancelled]);
+    (!groupId || s.group_id === groupId) && (!playerId || playerGroups.has(s.group_id)) &&
+    (showCancelled || s.status !== "cancelled")), [data, groupId, playerId, playerGroups, showCancelled]);
 
   const byDay = useMemo(() => {
     const m = new Map<string, VSession[]>();
@@ -51,12 +55,13 @@ function Planning() {
   }, [sessions]);
 
   function move(dir: number) {
-    setAnchor(view === "month" ? addMonthsISO(anchor, dir) : addDaysISO(anchor, 7 * dir));
+    setAnchor(view === "month" ? addMonthsISO(anchor, dir) : addDaysISO(anchor, (view === "day" ? 1 : 7) * dir));
     setSelectedDay(null);
   }
 
   const title = view === "month"
     ? fmtDate(monthRange(anchor).start, "MMMM yyyy")
+    : view === "day" ? fmtDate(anchor, "EEEE d MMMM yyyy")
     : `${fmtDate(range.start, "d MMM")} – ${fmtDate(range.end, "d MMM yyyy")}`;
 
   return (
@@ -66,7 +71,7 @@ function Planning() {
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Segmented value={view} onChange={(v) => { setView(v); setSelectedDay(null); }} options={[
-          { value: "week", label: "Semaine" }, { value: "month", label: "Mois" }, { value: "list", label: "Liste" },
+          { value: "day", label: "Jour" }, { value: "week", label: "Semaine" }, { value: "month", label: "Mois" }, { value: "list", label: "Liste" },
         ]} />
         <div className="flex items-center gap-1">
           <Button size="sm" variant="secondary" onClick={() => move(-1)} aria-label="Précédent"><ChevronLeft className="size-4" /></Button>
@@ -77,6 +82,10 @@ function Planning() {
           <option value="">Tous les groupes</option>
           {(data?.groups ?? []).map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
         </Select>
+        <Select value={playerId} onChange={(e) => setPlayerId(e.target.value)} className="!h-8 !w-auto text-sm" aria-label="Joueur">
+          <option value="">Tous les joueurs</option>
+          {(data?.players ?? []).filter((p) => p.group_names.length).map((p) => <option key={p.id} value={p.id}>{p.first_name} {p.last_name}</option>)}
+        </Select>
         <label className="flex items-center gap-1.5 text-xs text-slate-600">
           <input type="checkbox" className="accent-violet-600" checked={showCancelled} onChange={(e) => setShowCancelled(e.target.checked)} /> Annulées
         </label>
@@ -86,6 +95,13 @@ function Planning() {
 
       {loading && !data ? <Spinner /> : error ? <ErrorBox error={error} onRetry={reload} /> : (
         <>
+          {view === "day" && (
+            <Card className="divide-y divide-slate-100">
+              {(byDay.get(anchor) ?? []).length === 0
+                ? <div className="flex items-center justify-between p-4 text-sm text-slate-500">Aucune séance ce jour.<Button size="sm" variant="ghost" onClick={() => setAdding(anchor)}><Plus className="size-4" /> Ajouter</Button></div>
+                : byDay.get(anchor)!.map((s) => <SessionRow key={s.id} s={s} showGroup />)}
+            </Card>
+          )}
           {view === "week" && <WeekGrid start={range.start} byDay={byDay} today={today} onAdd={setAdding} />}
           {view === "list" && <WeekList start={range.start} byDay={byDay} today={today} />}
           {view === "month" && (

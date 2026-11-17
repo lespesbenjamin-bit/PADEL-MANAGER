@@ -9,3 +9,61 @@ body { @apply bg-slate-50 text-slate-900 antialiased; }
 input[type="date"], input[type="time"] { min-height: 2.5rem; }
 .scrollbar-thin::-webkit-scrollbar { height: 6px; width: 6px; }
 .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+
+/* ------------------------------------------------------------------
+   Mode sombre : inversion de la palette neutre + teintes adaptées.
+   Activé par la classe .dark sur <html> (Réglages / Mon profil).
+------------------------------------------------------------------- */
+.dark {
+  color-scheme: dark;
+  --color-slate-50: #0b1020;
+  --color-slate-100: #1a2234;
+  --color-slate-200: #2a3447;
+  --color-slate-300: #3b475d;
+  --color-slate-400: #64748b;
+  --color-slate-500: #94a3b8;
+  --color-slate-600: #b6c2d3;
+  --color-slate-700: #d5dde8;
+  --color-slate-800: #e8edf4;
+  --color-slate-900: #f4f7fb;
+  --color-violet-50: #22184a;
+  --color-violet-100: #2e1f63;
+  --color-violet-200: #4c2f99;
+  --color-violet-700: #c4b5fd;
+  --color-violet-800: #ddd6fe;
+  --color-violet-900: #ede9fe;
+  --color-violet-950: #f5f3ff;
+  --color-emerald-50: #0b2a1f;
+  --color-emerald-200: #14532d;
+  --color-emerald-700: #6ee7b7;
+  --color-emerald-900: #d1fae5;
+  --color-amber-50: #2d2208;
+  --color-amber-200: #713f12;
+  --color-amber-300: #854d0e;
+  --color-amber-700: #fcd34d;
+  --color-amber-800: #fde68a;
+  --color-amber-900: #fef3c7;
+  --color-rose-50: #331019;
+  --color-rose-100: #4c1524;
+  --color-rose-200: #7f1d2d;
+  --color-rose-700: #fda4af;
+  --color-sky-50: #0b2536;
+  --color-sky-200: #0c4a6e;
+  --color-sky-700: #7dd3fc;
+}
+.dark .bg-white { background-color: #111827; }
+.dark .bg-white\/60 { background-color: rgb(17 24 39 / 0.6); }
+.dark .bg-white\/85 { background-color: rgb(17 24 39 / 0.85); }
+.dark .bg-white\/95 { background-color: rgb(17 24 39 / 0.95); }
+.dark .bg-slate-900 { background-color: #e2e8f0; color: #0f172a; }
+.dark .bg-slate-900\/40, .dark .bg-slate-900\/70 { background-color: rgb(0 0 0 / 0.6); }
+.dark .ring-slate-900 { --tw-ring-color: #e2e8f0; }
+.dark .from-violet-50 { --tw-gradient-from: #160f33; }
+.dark .shadow-sm, .dark .shadow-md, .dark .shadow-lg, .dark .shadow-xl, .dark .shadow-2xl { --tw-shadow-color: rgb(0 0 0 / 0.5); }
+
+@media print {
+  body { background: #fff !important; }
+  nav, header, aside { display: none !important; }
+  main { padding: 0 !important; }
+  .md\:pl-64 { padding-left: 0 !important; }
+}

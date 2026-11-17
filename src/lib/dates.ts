@@ -98,3 +98,12 @@ export function timeToMinutes(t: string) {
   const [h, m] = t.split(":").map(Number);
   return h * 60 + m;
 }
+
+export function timeAgo(ts: string) {
+  const s = Math.max(0, (Date.now() - new Date(ts).getTime()) / 1000);
+  if (s < 60) return "à l'instant";
+  if (s < 3600) return `il y a ${Math.floor(s / 60)} min`;
+  if (s < 86400) return `il y a ${Math.floor(s / 3600)} h`;
+  if (s < 7 * 86400) return `il y a ${Math.floor(s / 86400)} j`;
+  return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "Europe/Paris" }).format(new Date(ts));
+}

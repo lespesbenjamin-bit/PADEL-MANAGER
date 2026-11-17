@@ -24,15 +24,15 @@ export const COACH_NAV: NavSection[] = [
     { href: "/joueurs", label: "Joueurs & crédits", short: "Joueurs", icon: Users },
   ] },
   { title: "Compétition", items: [
-    { href: "/tournois", label: "Tournois", short: "Tournois", icon: Trophy, step: 4 },
+    { href: "/tournois", label: "Tournois", short: "Tournois", icon: Trophy },
   ] },
   { title: "Communauté", items: [
-    { href: "/communaute", label: "Fil d'actualité", short: "Communauté", icon: Megaphone, step: 5 },
+    { href: "/communaute", label: "Fil d'actualité", short: "Communauté", icon: Megaphone },
   ] },
   { title: "Pédagogie", items: [
-    { href: "/exercices", label: "Exercices", short: "Exercices", icon: BookOpen, step: 6 },
-    { href: "/schemas", label: "Schémas tactiques", short: "Schémas", icon: PenTool, step: 6 },
-    { href: "/programmes", label: "Séances types", short: "Séances types", icon: ClipboardList, step: 7 },
+    { href: "/exercices", label: "Exercices", short: "Exercices", icon: BookOpen },
+    { href: "/schemas", label: "Schémas tactiques", short: "Schémas", icon: PenTool },
+    { href: "/programmes", label: "Séances types", short: "Séances types", icon: ClipboardList },
   ] },
 ];
 
@@ -42,9 +42,9 @@ export const COACH_MOBILE = ["/", "/planning", "/groupes", "/joueurs"];
 export const PLAYER_NAV: NavSection[] = [
   { title: null, items: [
     { href: "/", label: "Mon espace", short: "Accueil", icon: LayoutDashboard },
-    { href: "/tournois", label: "Mes tournois", short: "Tournois", icon: Trophy, step: 4 },
-    { href: "/communaute", label: "Communauté", short: "Communauté", icon: Megaphone, step: 5 },
-    { href: "/exercices", label: "Exercices partagés", short: "Exercices", icon: BookOpen, step: 6 },
+    { href: "/tournois", label: "Mes tournois", short: "Tournois", icon: Trophy },
+    { href: "/communaute", label: "Communauté", short: "Communauté", icon: Megaphone },
+    { href: "/exercices", label: "Exercices partagés", short: "Exercices", icon: BookOpen },
     { href: "/mon-profil", label: "Mon profil", short: "Profil", icon: UserCircle },
   ] },
 ];

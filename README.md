@@ -7,6 +7,12 @@
 > | Migration | Contenu |
 > |---|---|
 > | 002_coach_hub_roles.sql | Rôles coach / joueur, invitations joueurs, espace joueur, lieu des groupes |
+> | 003_coach_hub_modules.sql | Tournois, communauté (+ stockage photos privé « community »), notifications, exercices, schémas tactiques, séances types, suppression de groupe, RGPD |
+>
+> **Modules** : Tableau de bord · Planning (jour / semaine / mois / liste, par groupe ou par joueur) · Groupes, cycles, joueurs & crédits ·
+> Tournois (calendrier collaboratif, demandes d'accompagnement, résultats) · Communauté privée (photos, réactions, commentaires, signalements, modération) ·
+> Exercices · Éditeur de schémas tactiques (étapes animées, export PNG/PDF) · Séances types (glisser-déposer, modèles, historique pédagogique) ·
+> Espace joueur · Notifications · Mode sombre · Export / suppression des données (RGPD).
 >
 > **Comptes joueurs :** dans Supabase > Authentication > Sign In / Providers, « Allow new users to sign up » doit être **activé**.
 > Un compte créé sans code d'invitation valide n'a accès à aucune donnée (écran « Relie ton compte »).

@@ -2,20 +2,30 @@
 import Link from "next/link";
 import { CalendarClock, MapPin, Megaphone, Repeat, Trophy, Wallet } from "lucide-react";
 import * as api from "@/lib/api";
+import * as hub from "@/lib/hub";
 import { fmtDate, fmtRange, todayISO, weekdayName } from "@/lib/dates";
 import { useAsync } from "@/lib/hooks";
 import { ATTENDANCE } from "@/lib/labels";
 import { Badge, Card, cx, Empty, ErrorBox, LevelBadge, Section, Spinner, StatTile } from "./ui";
 
 export function PlayerHome() {
-  const { data, error, loading, reload } = useAsync(() => api.getMyPlayerSpace(), []);
+  const { data: all, error, loading, reload } = useAsync(async () => {
+    const [space, tournaments, feed, themes] = await Promise.all([
+      api.getMyPlayerSpace(), hub.getTournaments(false).catch(() => [] as hub.Tournament[]),
+      hub.getFeed({ limit: 3 }).catch(() => [] as hub.FeedPost[]), hub.getMyUpcomingThemes().catch(() => ({} as Record<string, { theme: string }>)),
+    ]);
+    return { space, tournaments, feed, themes };
+  }, []);
+  const data = all?.space ?? null;
   const today = todayISO();
 
-  if (loading && !data) return <Spinner />;
+  if (loading && !all) return <Spinner />;
   if (error) return <ErrorBox error={error} onRetry={reload} />;
   if (!data) return <Empty>Ton compte n&apos;est relié à aucune fiche joueur. Demande un nouveau code à ton coach.</Empty>;
 
   const { player, credits, groups, upcoming, history, packages } = data;
+  const themes = all?.themes ?? {};
+  const nextTournaments = (all?.tournaments ?? []).filter((t) => t.status !== "cancelled" && (t.end_date ?? t.start_date) >= today).slice(0, 3);
   const next = upcoming.find((s) => s.status === "planned");
   const low = credits.balance <= 1;
 
@@ -36,6 +46,7 @@ export function PlayerHome() {
             <span>{next.group_name}</span>
             {next.location && <span className="inline-flex items-center gap-1"><MapPin className="size-4 text-slate-400" />{next.location}</span>}
           </div>
+          {themes[next.id] && <div className="mt-2 inline-block rounded-lg bg-violet-50 px-2 py-1 text-sm text-violet-800">Thème : <b>{themes[next.id].theme}</b></div>}
         </Card>
       )}
 
@@ -68,6 +79,7 @@ export function PlayerHome() {
                         {s.location && <span>· {s.location}</span>}
                         {s.rescheduled && s.original_date && <span className="inline-flex items-center gap-0.5"><Repeat className="size-3" /> reportée du {fmtDate(s.original_date, "d/MM")}</span>}
                       </div>
+                      {themes[s.id] && <div className="mt-0.5 text-xs font-medium text-violet-700">{themes[s.id].theme}</div>}
                     </div>
                     {s.status === "cancelled" && <Badge className="bg-rose-50 text-rose-700 ring-rose-200">Annulée</Badge>}
                   </div>
@@ -121,11 +133,30 @@ export function PlayerHome() {
             </Card>
           </Section>
 
-          <Section title="Bientôt">
-            <div className="grid grid-cols-2 gap-2">
-              <Link href="/tournois"><Card className="p-3 text-xs text-slate-500 hover:bg-slate-50"><Trophy className="mb-1.5 size-5 text-violet-600" />Ton calendrier de tournois</Card></Link>
-              <Link href="/communaute"><Card className="p-3 text-xs text-slate-500 hover:bg-slate-50"><Megaphone className="mb-1.5 size-5 text-violet-600" />Le fil de la communauté</Card></Link>
-            </div>
+          <Section title="Mes prochains tournois" actions={<Link href="/tournois" className="text-xs font-medium text-violet-700">Gérer →</Link>}>
+            <Card className="divide-y divide-slate-100">
+              {nextTournaments.length === 0 ? (
+                <Link href="/tournois" className="flex items-center gap-2 p-3 text-sm text-slate-500 hover:bg-slate-50"><Trophy className="size-4 text-violet-600" />Ajoute tes prochains tournois</Link>
+              ) : nextTournaments.map((t) => (
+                <Link key={t.id} href="/tournois" className="block p-3 text-sm hover:bg-slate-50">
+                  <div className="font-medium">{t.name} <span className="text-xs text-slate-500">· {t.category}</span></div>
+                  <div className="text-xs text-slate-500">{fmtDate(t.start_date, "EEE d MMM")} · {hub.T_STATUS[t.status].label}{t.coaching_status !== "none" ? ` · ${hub.C_STATUS[t.coaching_status]}` : ""}</div>
+                </Link>
+              ))}
+            </Card>
+          </Section>
+
+          <Section title="Communauté" actions={<Link href="/communaute" className="text-xs font-medium text-violet-700">Voir le fil →</Link>}>
+            <Card className="divide-y divide-slate-100">
+              {(all?.feed ?? []).length === 0 ? (
+                <Link href="/communaute" className="flex items-center gap-2 p-3 text-sm text-slate-500 hover:bg-slate-50"><Megaphone className="size-4 text-violet-600" />Partage ta première publication</Link>
+              ) : all!.feed.map((p) => (
+                <Link key={p.id} href="/communaute" className="block p-3 hover:bg-slate-50">
+                  <div className="text-xs text-slate-500">{hub.POST_KINDS[p.kind].emoji} <b className="text-slate-700">{p.author_name}</b></div>
+                  <div className="line-clamp-2 text-sm text-slate-700">{p.body || `${p.photos.length} photo(s)`}</div>
+                </Link>
+              ))}
+            </Card>
           </Section>
         </div>
       </div>

@@ -10,6 +10,8 @@ import { RoleContext } from "@/lib/role";
 import type { MyProfile } from "@/lib/types";
 import { COACH_MOBILE, isActive, navFor, NavItem, PLAYER_ALLOWED, PLAYER_MOBILE } from "./nav";
 import { Button, Card, cx, errMsg, Field, Input, ToastProvider } from "./ui";
+import { NotificationBell } from "./NotificationBell";
+import { ConsentGate } from "./AccountTools";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -78,7 +80,7 @@ function Frame({ profile, children }: { profile: MyProfile; children: ReactNode 
     <div className="min-h-dvh md:pl-64">
       {/* Barre latérale (ordinateur) */}
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-slate-200 bg-white px-4 py-6 md:flex">
-        <Brand role={profile.role} />
+        <div className="flex items-center justify-between"><Brand role={profile.role} /><NotificationBell align="left" /></div>
         <nav className="mt-6 flex flex-1 flex-col gap-4 overflow-y-auto">
           {sections.map((sec, i) => (
             <div key={i}>
@@ -93,14 +95,17 @@ function Frame({ profile, children }: { profile: MyProfile; children: ReactNode 
       {/* En-tête (mobile) */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/70 bg-white/85 px-4 py-3 backdrop-blur md:hidden">
         <Brand role={profile.role} compact />
+        <div className="flex items-center gap-1"><NotificationBell />
         {profile.role === "coach"
           ? <Link href="/reglages" aria-label="Réglages" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><Settings className="size-5" /></Link>
           : <Link href="/mon-profil" aria-label="Mon profil" className="grid size-8 place-items-center rounded-full bg-violet-100 text-xs font-semibold text-violet-700">{initials(profile.display_name)}</Link>}
+        </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-8">
         {forbidden ? <Forbidden /> : children}
       </main>
+      <ConsentGate role={profile.role} />
 
       {/* Navigation basse (mobile) */}
       <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">

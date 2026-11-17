@@ -5,6 +5,7 @@ import {
   AlertTriangle, BookOpen, CalendarPlus, ChevronRight, Megaphone, Plus, Trophy, UserPlus, UsersRound, Wallet,
 } from "lucide-react";
 import * as api from "@/lib/api";
+import * as hub from "@/lib/hub";
 import { fmtDate, monthRange, todayISO, weekRange, WEEKDAYS } from "@/lib/dates";
 import { useAsync } from "@/lib/hooks";
 import { LEVELS } from "@/lib/labels";
@@ -24,10 +25,11 @@ export function CoachDashboard() {
   const to = wk.end > mo.end ? wk.end : mo.end;
 
   const { data, error, loading, reload } = useAsync(async () => {
-    const [groups, memberships, sessions, pending, players] = await Promise.all([
+    const [groups, memberships, sessions, pending, players, tournaments, feed] = await Promise.all([
       api.getGroups(), api.getActiveMemberships(), api.getSessions({ from, to }), api.getSessions({ pendingOnly: true }), api.getPlayers(),
+      hub.getTournaments(true).catch(() => [] as hub.Tournament[]), hub.getFeed({ limit: 3 }).catch(() => [] as hub.FeedPost[]),
     ]);
-    return { groups, memberships, sessions, pending, players };
+    return { groups, memberships, sessions, pending, players, tournaments, feed };
   }, [from, to]);
 
   const [fDay, setFDay] = useState("");
@@ -78,9 +80,9 @@ export function CoachDashboard() {
         <Shortcut icon={UsersRound} label="Créer un groupe" onClick={() => setCreating(true)} />
         <Shortcut icon={UserPlus} label="Ajouter un joueur" onClick={() => setModal("player")} />
         <Shortcut icon={CalendarPlus} label="Programmer une séance" onClick={() => setModal("session")} disabled={isEmpty} />
-        <Shortcut icon={BookOpen} label="Créer un exercice" href="/exercices" soon />
-        <Shortcut icon={Trophy} label="Compétitions" href="/tournois" soon />
-        <Shortcut icon={Megaphone} label="Publier une actualité" href="/communaute" soon />
+        <Shortcut icon={BookOpen} label="Créer un exercice" href="/exercices/nouveau" />
+        <Shortcut icon={Trophy} label="Compétitions" href="/tournois" />
+        <Shortcut icon={Megaphone} label="Publier une actualité" href="/communaute" />
       </div>
 
       {isEmpty ? (
@@ -147,15 +149,34 @@ export function CoachDashboard() {
                 </Card>
               </Section>
 
-              <Section title="Prochains tournois">
-                <Link href="/tournois"><Card className="flex items-center gap-3 p-3 text-sm text-slate-500 hover:bg-slate-50">
-                  <Trophy className="size-4 shrink-0 text-slate-400" />Le calendrier des tournois de tes joueurs arrive à l&apos;étape 4.
-                </Card></Link>
+              <Section title="Prochains tournois" actions={<Link href="/tournois" className="text-xs font-medium text-violet-700">Tous →</Link>}>
+                <Card className="divide-y divide-slate-100">
+                  {data.tournaments.filter((t) => t.coaching_status === "requested").length > 0 && (
+                    <Link href="/tournois" className="flex items-center gap-2 bg-amber-50 p-3 text-sm font-medium text-amber-800">
+                      <AlertTriangle className="size-4" />{data.tournaments.filter((t) => t.coaching_status === "requested").length} demande(s) d&apos;accompagnement à traiter
+                    </Link>
+                  )}
+                  {(() => { const up = data.tournaments.filter((t) => t.status !== "cancelled" && (t.end_date ?? t.start_date) >= today).slice(0, 5);
+                    return up.length === 0 ? <div className="p-3 text-sm text-slate-500">Aucun tournoi à venir renseigné.</div> : up.map((t) => (
+                      <Link key={t.id} href="/tournois" className="flex items-center gap-3 p-3 hover:bg-slate-50">
+                        <Trophy className="size-4 shrink-0 text-amber-500" />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium">{t.player_first_name} · {t.name}</div>
+                          <div className="text-xs text-slate-500">{fmtDate(t.start_date, "EEE d MMM")} · {t.category}{t.partner_name ? ` · avec ${t.partner_name}` : ""}</div>
+                        </div>
+                      </Link>
+                    )); })()}
+                </Card>
               </Section>
-              <Section title="Communauté">
-                <Link href="/communaute"><Card className="flex items-center gap-3 p-3 text-sm text-slate-500 hover:bg-slate-50">
-                  <Megaphone className="size-4 shrink-0 text-slate-400" />Les dernières publications s&apos;afficheront ici (étape 5).
-                </Card></Link>
+              <Section title="Communauté" actions={<Link href="/communaute" className="text-xs font-medium text-violet-700">Fil →</Link>}>
+                <Card className="divide-y divide-slate-100">
+                  {data.feed.length === 0 ? <div className="p-3 text-sm text-slate-500">Pas encore de publication.</div> : data.feed.map((p) => (
+                    <Link key={p.id} href="/communaute" className="block p-3 hover:bg-slate-50">
+                      <div className="text-xs text-slate-500">{hub.POST_KINDS[p.kind].emoji} <b className="text-slate-700">{p.author_name}</b></div>
+                      <div className="line-clamp-2 text-sm text-slate-700">{p.body || (p.photos.length ? `${p.photos.length} photo(s)` : "")}</div>
+                    </Link>
+                  ))}
+                </Card>
               </Section>
 
               {k.nearEnd.length > 0 && (
