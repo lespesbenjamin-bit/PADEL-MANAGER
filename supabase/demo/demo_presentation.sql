@@ -29,6 +29,10 @@ begin
   -- -------------------------------------------------------------------
   select id into v_coach from auth.users where lower(email) = c_email;
   select id into v_user  from auth.users where lower(email) = j_email;
+  if not exists (select 1 from information_schema.columns where table_schema = 'public'
+                 and table_name = 'player_gamification_profiles' and column_name = 'favorite_level') then
+    raise exception 'Lance d''abord la migration 010 (cartes Padel Legends), puis relance ce script';
+  end if;
   if v_coach is null or v_user is null then
     raise exception 'Crée d''abord les 2 comptes dans Authentication > Users : % et %', c_email, j_email;
   end if;
