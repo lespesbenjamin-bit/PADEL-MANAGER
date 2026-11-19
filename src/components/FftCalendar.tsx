@@ -1,10 +1,10 @@
 "use client";
 /* Calendrier des tournois FFT (Ten'Up) : recherche, « J'y participe », qui de mon groupe y va. */
 import { useEffect, useMemo, useState } from "react";
-import { CalendarCheck, Check, ExternalLink, Info, MapPin, RefreshCw, Search, Settings2, Users } from "lucide-react";
+import { CalendarCheck, CalendarDays, Check, ChevronLeft, ChevronRight, ExternalLink, Info, List, MapPin, RefreshCw, Search, Settings2, Users } from "lucide-react";
 import * as hub from "@/lib/hub";
-import { DEPARTEMENTS, FFT_NATURES, guessCategory, LEVEL_ORDER, type FftDetail, type FftNature, type FftTournament } from "@/lib/fft";
-import { fmtDate, timeAgo, todayISO } from "@/lib/dates";
+import { DEPARTEMENTS, FFT_NATURES, guessCategory, hourFromLabel, LEVEL_ORDER, type FftDetail, type FftNature, type FftTournament } from "@/lib/fft";
+import { addMonthsISO, fmtDate, monthGrid, timeAgo, todayISO } from "@/lib/dates";
 import { useRole } from "@/lib/role";
 import type { PlayerStats } from "@/lib/types";
 import { Badge, Button, Card, Checkbox, cx, Empty, ErrorBox, errMsg, Field, Input, Modal, Select, Spinner, useToast } from "@/components/ui";
@@ -38,6 +38,8 @@ export function FftCalendarView({ mine, players, onAdded }: { mine: hub.Tourname
   const [pick, setPick] = useState<FftTournament | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [tick, setTick] = useState(0);
+  const [view, setView] = useState<"calendar" | "list">("calendar");
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -90,6 +92,7 @@ export function FftCalendarView({ mine, players, onAdded }: { mine: hub.Tourname
     );
   }
 
+  const activeFilters = (nature ? 1 : 0) + levels.length + (dept ? 1 : 0) + (km != null ? 1 : 0) + (onlyMine ? 1 : 0);
   const toggleLevel = (l: string) => setLevels((v) => v.includes(l) ? v.filter((x) => x !== l) : [...v, l]);
 
   return (
@@ -109,17 +112,20 @@ export function FftCalendarView({ mine, players, onAdded }: { mine: hub.Tourname
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Club, ville, nom du tournoi…" className="!pl-9" aria-label="Rechercher un tournoi" />
         </div>
-        {depts.length > 1 && (
-          <Select value={dept} onChange={(e) => setDept(e.target.value)} className="!w-auto" aria-label="Département">
-            <option value="">Tous départements</option>
-            {depts.map((d) => <option key={d} value={d}>{d} · {DEPARTEMENTS[d] ?? "Département " + d}</option>)}
-          </Select>
-        )}
+        <div className="inline-flex rounded-xl bg-white p-1 ring-1 ring-slate-200" role="group" aria-label="Affichage">
+          {([["calendar", "Calendrier", CalendarDays], ["list", "Liste", List]] as const).map(([k, l, I]) => (
+            <button key={k} onClick={() => setView(k)} aria-pressed={view === k}
+              className={cx("inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition", view === k ? "bg-violet-600 text-white" : "text-slate-600 hover:bg-slate-50")}>
+              <I className="size-4" />{l}</button>
+          ))}
+        </div>
         <Select value={months} onChange={(e) => setMonths(Number(e.target.value))} className="!w-auto" aria-label="Période">
           <option value={1}>1 mois</option><option value={3}>3 mois</option><option value={6}>6 mois</option>
         </Select>
+        <Button variant={activeFilters ? "primary" : "secondary"} onClick={() => setShowFilters((v) => !v)} aria-expanded={showFilters}>
+          <Settings2 className="size-4" />Filtres{activeFilters ? ` (${activeFilters})` : ""}</Button>
       </div>
-      <Card className="space-y-3 p-3">
+      {showFilters && <Card className="space-y-3 p-3">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="w-full text-xs font-medium text-slate-500 sm:mr-1 sm:w-20">Tableau</span>
           {([["", "Tous"], ["DM", "Hommes"], ["DD", "Femmes"], ["DX", "Mixte"]] as const).map(([k, l]) => (
@@ -134,6 +140,15 @@ export function FftCalendarView({ mine, players, onAdded }: { mine: hub.Tourname
               className={cx("rounded-full px-3 py-1 text-xs font-semibold ring-1 transition", levels.includes(l) ? "bg-slate-900 text-white ring-slate-900" : "bg-white text-slate-600 ring-slate-200 hover:bg-slate-50")}>{l}</button>
           ))}
         </div>
+        {depts.length > 1 && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="w-full text-xs font-medium text-slate-500 sm:w-20">Département</span>
+            <Select value={dept} onChange={(e) => setDept(e.target.value)} className="!h-9 !w-auto text-sm" aria-label="Département">
+              <option value="">Tous départements</option>
+              {depts.map((d) => <option key={d} value={d}>{d} · {DEPARTEMENTS[d] ?? "Département " + d}</option>)}
+            </Select>
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <label htmlFor="fft-km" className="w-full text-xs font-medium text-slate-500 sm:w-20">Distance</label>
           <input id="fft-km" type="range" min={10} max={zoneKm} step={5} value={km ?? zoneKm} onChange={(e) => setMaxKm(Number(e.target.value))}
@@ -150,9 +165,11 @@ export function FftCalendarView({ mine, players, onAdded }: { mine: hub.Tourname
           )}
           <span className="ml-auto text-xs text-slate-500">{items.length} tournoi{items.length > 1 ? "s" : ""} à venir</span>
         </div>
-      </Card>
+      </Card>}
 
-      {byMonth.length === 0 ? <Empty>Aucun tournoi ne correspond à ces critères.</Empty> : byMonth.map(([m, list]) => (
+      {view === "calendar" ? (
+        <FftMonthView items={items} who={who} myIds={myIds} isCoach={isCoach} months={months} onOpen={setPick} onNeedMore={() => setMonths(6)} />
+      ) : byMonth.length === 0 ? <Empty>Aucun tournoi ne correspond à ces critères.</Empty> : byMonth.map(([m, list]) => (
         <section key={m}>
           <h2 className="mb-2 text-lg capitalize text-slate-900">{fmtDate(m + "-01", "MMMM yyyy")} <span className="text-sm font-normal normal-case text-slate-400">· {list.length}</span></h2>
           <Card className="divide-y divide-slate-100">
@@ -164,6 +181,111 @@ export function FftCalendarView({ mine, players, onAdded }: { mine: hub.Tourname
 
       <FftDetailModal t={pick} players={players} mine={mine} onClose={() => setPick(null)}
         onAdded={() => { setPick(null); onAdded(); setTick((x) => x + 1); }} />
+    </div>
+  );
+}
+
+/* ---------- Vue calendrier : mois + tableaux du jour choisi ---------- */
+const GENDER: Record<FftNature, { label: string; cls: string }> = {
+  DM: { label: "Hommes", cls: "text-sky-600" }, DD: { label: "Dames", cls: "text-rose-500" }, DX: { label: "Mixte", cls: "text-amber-500" },
+};
+interface Board { t: FftTournament; level: string | null; nature: FftNature | null }
+function boardsOf(t: FftTournament): Board[] {
+  const lv = t.levels.length ? t.levels : [null];
+  const nt = t.natures.length ? t.natures : [null];
+  return lv.flatMap((level) => nt.map((nature) => ({ t, level, nature })));
+}
+
+function FftMonthView({ items, who, myIds, isCoach, months, onOpen, onNeedMore }: {
+  items: FftTournament[]; who: Record<string, string[]>; myIds: Set<string>; isCoach: boolean; months: number;
+  onOpen: (t: FftTournament) => void; onNeedMore: () => void;
+}) {
+  const today = todayISO();
+  const byDay = useMemo(() => {
+    const m = new Map<string, FftTournament[]>();
+    for (const t of items) m.set(t.start, [...(m.get(t.start) ?? []), t]);
+    return m;
+  }, [items]);
+  const firstDay = useMemo(() => [...byDay.keys()].sort()[0] ?? today, [byDay, today]);
+  const [month, setMonth] = useState(firstDay.slice(0, 7) + "-01");
+  const [day, setDay] = useState<string | null>(null);
+  const sel = day && byDay.has(day) ? day : null;
+  const selected = sel ?? (byDay.has(today) ? today : [...byDay.keys()].sort().find((d) => d.startsWith(month.slice(0, 7))) ?? null);
+  const firstMonth = today.slice(0, 7) + "-01";
+  const lastMonth = addMonthsISO(firstMonth, months - 1);
+  const grid = monthGrid(month);
+  const boards = (selected ? byDay.get(selected) ?? [] : [])
+    .flatMap(boardsOf)
+    .sort((a, b) => LEVEL_ORDER.indexOf(a.level ?? "") - LEVEL_ORDER.indexOf(b.level ?? "") || (a.t.distance_km ?? 999) - (b.t.distance_km ?? 999));
+  const count = (d: string) => (byDay.get(d) ?? []).reduce((n, t) => n + boardsOf(t).length, 0);
+
+  return (
+    <div className="space-y-4">
+      <Card className="p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="font-display text-2xl text-slate-900">{fmtDate(month, "MMMM")} <span className="text-slate-400">{fmtDate(month, "yyyy")}</span></div>
+          <div className="flex gap-2">
+            <button aria-label="Mois précédent" disabled={month <= firstMonth} onClick={() => { setMonth(addMonthsISO(month, -1)); setDay(null); }}
+              className="grid size-9 place-items-center rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-30"><ChevronLeft className="size-5" /></button>
+            <button aria-label="Mois suivant" onClick={() => { if (month >= lastMonth) onNeedMore(); setMonth(addMonthsISO(month, 1)); setDay(null); }}
+              disabled={month >= addMonthsISO(firstMonth, 5)}
+              className="grid size-9 place-items-center rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-30"><ChevronRight className="size-5" /></button>
+          </div>
+        </div>
+        <div className="grid grid-cols-7 gap-y-1 text-center">
+          {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => <div key={i} className="pb-1 text-xs font-semibold text-slate-400">{d}</div>)}
+          {grid.map((d) => {
+            const inMonth = d.slice(0, 7) === month.slice(0, 7);
+            if (!inMonth) return <div key={d} />;
+            const n = count(d), past = d < today, isSel = d === selected;
+            return (
+              <button key={d} data-day={d} disabled={past || n === 0} onClick={() => setDay(d)} aria-pressed={isSel}
+                aria-label={`${fmtDate(d, "EEEE d MMMM")}${n ? ` : ${n} tableau${n > 1 ? "x" : ""}` : ""}`}
+                className={cx("relative mx-auto flex h-12 w-11 flex-col items-center justify-center rounded-xl text-lg font-semibold tabular-nums",
+                  isSel ? "bg-ball text-slate-900 shadow-sm" : d === today ? "ring-2 ring-slate-300" : "",
+                  past ? "text-slate-300" : n ? cx("text-slate-900", !isSel && "hover:bg-slate-100") : "text-slate-400")}>
+                {Number(d.slice(8))}
+                {n > 0 && !past && <span className={cx("absolute bottom-1.5 h-1 rounded-full", isSel ? "bg-slate-900" : "bg-violet-600", n >= 6 ? "w-7" : n >= 3 ? "w-5" : "w-2.5")} />}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
+      <div className="flex items-center gap-3 text-sm text-slate-500">
+        <span className="h-px flex-1 bg-slate-200" />
+        {selected ? <span><b className="capitalize text-slate-700">{fmtDate(selected, "EEEE d MMMM")}</b> · {boards.length} tableau{boards.length > 1 ? "x" : ""}</span> : <span>Aucun tournoi ce mois-ci</span>}
+        <span className="h-px flex-1 bg-slate-200" />
+      </div>
+
+      {boards.length > 0 && (
+        <Card className="divide-y divide-slate-100">
+          {boards.map((b, i) => {
+            const hour = hourFromLabel(b.t.name);
+            const names = who[b.t.id] ?? [];
+            return (
+              <button key={b.t.id + i} onClick={() => onOpen(b.t)} data-fft={b.t.id} className="flex w-full items-center gap-3 p-3 text-left hover:bg-slate-50">
+                <div className="w-20 shrink-0 border-r border-slate-200 pr-2 text-center font-display uppercase italic leading-none">
+                  <div className="text-2xl text-violet-600">{b.level ?? "—"}</div>
+                  {b.nature && <div className={cx("mt-0.5 text-sm", GENDER[b.nature].cls)}>{GENDER[b.nature].label}</div>}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-display text-lg uppercase leading-tight text-slate-900">{b.t.club || b.t.name}</div>
+                  <div className="truncate text-sm text-slate-500">{b.t.city ? b.t.city.charAt(0) + b.t.city.slice(1).toLowerCase() : ""}{b.t.distance_km != null ? ` · ${Math.round(b.t.distance_km)} km` : ""}</div>
+                  {(names.length > 0 || (myIds.has(b.t.id) && !isCoach)) && (
+                    <div className="mt-1 flex flex-wrap gap-1.5 text-[11px]">
+                      {myIds.has(b.t.id) && !isCoach && <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 font-medium text-emerald-700"><Check className="size-3" />Dans mon suivi</span>}
+                      {names.length > 0 && <span className="inline-flex items-center gap-1 rounded bg-violet-50 px-1.5 py-0.5 text-violet-700"><Users className="size-3" />{names.join(", ")}</span>}
+                    </div>
+                  )}
+                </div>
+                {hour && <span className="font-display text-lg text-violet-700">{hour}</span>}
+                <ChevronRight className="size-5 shrink-0 text-slate-400" />
+              </button>
+            );
+          })}
+        </Card>
+      )}
     </div>
   );
 }

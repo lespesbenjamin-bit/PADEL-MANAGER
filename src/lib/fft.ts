@@ -161,3 +161,9 @@ export const DEPARTEMENTS: Record<string, string> = {
   "89": "Yonne", "90": "Territoire de Belfort", "91": "Essonne", "92": "Hauts-de-Seine", "93": "Seine-Saint-Denis", "94": "Val-de-Marne",
   "95": "Val-d'Oise",
 };
+
+/** Heure de début écrite dans le libellé : « Soirée 18h30 » -> 18h30, « (9h-13h) » -> 9h */
+export function hourFromLabel(label: string): string | null {
+  const m = (label || "").match(/(?<![\d/])([01]?\d|2[0-3])\s?[hH]\s?([0-5]\d)?(?![\w/])/);
+  return m ? `${Number(m[1])}h${m[2] ?? ""}` : null;
+}
