@@ -53,7 +53,7 @@ export function tenupSearchBody(q: FftQuery, from: number, size: number) {
     dateDebut: `${q.from}T00:00:00.000Z`, dateFin: `${q.to}T00:00:00.000Z`,
     type: [], codeClub: null, ligues: [], comites: [], utiliserMesDonnees: false, naturesEpreuves: [],
     typesEpreuves: [], naturesTerrains: [], categoriesJeu: [], categoriesAge: [], familles: [],
-    tournoiInterne: false, classements: [], inscriptionEnLigne: null, paiementEnLigne: null, filtres: true, sort: "DATE",
+    tournoiInterne: false, classements: [], inscriptionEnLigne: null, paiementEnLigne: null, filtres: true, sort: "DISTANCE",
   };
 }
 
@@ -99,4 +99,21 @@ export function parseTenupFiche(id: string, data: unknown): FftDetail {
 /** Catégorie à proposer quand un joueur ajoute ce tournoi à son suivi */
 export function guessCategory(t: Pick<FftTournament, "levels">, detail?: FftDetail | null) {
   return (detail?.levels[0] ?? t.levels[0]) || "P100";
+}
+
+/** Points de recherche : Ten'Up limite le rayon d'une recherche, on couvre donc les grandes
+    zones avec un cercle central de 100 km + une couronne de points autour. */
+export const TENUP_MAX_RADIUS = 100;
+export function searchPoints(lat: number, lng: number, radius: number) {
+  const pts = [{ lat, lng, r: Math.min(radius, TENUP_MAX_RADIUS), main: true }];
+  if (radius <= TENUP_MAX_RADIUS) return pts;
+  const ring = radius - TENUP_MAX_RADIUS * 0.8;          // centres de la couronne
+  const n = Math.min(10, Math.max(6, Math.ceil((2 * Math.PI * ring) / (TENUP_MAX_RADIUS * 1.4))));
+  for (let i = 0; i < n; i++) {
+    const a = (2 * Math.PI * i) / n;
+    const dLat = (ring * Math.cos(a)) / 111;
+    const dLng = (ring * Math.sin(a)) / (111 * Math.cos((lat * Math.PI) / 180));
+    pts.push({ lat: Math.round((lat + dLat) * 1000) / 1000, lng: Math.round((lng + dLng) * 1000) / 1000, r: TENUP_MAX_RADIUS, main: false });
+  }
+  return pts;
 }

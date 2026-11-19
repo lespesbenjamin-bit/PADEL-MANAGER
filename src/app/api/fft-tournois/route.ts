@@ -7,10 +7,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
-import { parseTenupCards, parseTenupFiche, tenupSearchBody, type FftQuery, type FftTournament } from "@/lib/fft";
+import { parseTenupCards, parseTenupFiche, searchPoints, tenupSearchBody, type FftQuery, type FftTournament } from "@/lib/fft";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -31,7 +31,11 @@ async function tenup(url: string, init: RequestInit) {
   const timer = setTimeout(() => ctrl.abort(), 20000);
   try {
     const r = await fetch(url, { ...init, headers: HEADERS, signal: ctrl.signal, cache: "no-store" });
-    if (!r.ok) throw new Error(`Ten'Up a répondu ${r.status}`);
+    if (!r.ok) {
+      const txt = (await r.text().catch(() => "")).replace(/\s+/g, " ").slice(0, 160);
+      console.error("[fft] Ten'Up", r.status, url, txt);
+      throw new Error(`Ten'Up a répondu ${r.status}${txt ? ` (${txt})` : ""}`);
+    }
     return await r.json();
   } catch (e) {
     if (e instanceof Error && e.name === "AbortError") throw new Error("Ten'Up ne répond pas (délai dépassé)");
@@ -39,7 +43,7 @@ async function tenup(url: string, init: RequestInit) {
   } finally { clearTimeout(timer); }
 }
 
-async function searchAll(q: FftQuery) {
+async function searchOne(q: FftQuery) {
   const items: FftTournament[] = [];
   let total = 0;
   for (let from = 0; from < MAX; from += PAGE) {
@@ -48,14 +52,25 @@ async function searchAll(q: FftQuery) {
     items.push(...page.items);
     if (page.items.length === 0 || from + PAGE >= total) break;
   }
-  const seen = new Set<string>();
-  return {
-    fetched_at: new Date().toISOString(), total,
-    items: items.filter((t) => !seen.has(t.id) && seen.add(t.id)).sort((a, b) => a.start.localeCompare(b.start) || a.name.localeCompare(b.name)),
-  };
+  return items;
 }
 
-const cachedSearch = unstable_cache(searchAll, ["fft-search-v1"], { revalidate: 6 * 3600 });
+async function searchAll(q: FftQuery) {
+  const byId = new Map<string, FftTournament>();
+  for (const pt of searchPoints(q.lat, q.lng, q.radius_km)) {
+    const list = await searchOne({ ...q, lat: pt.lat, lng: pt.lng, radius_km: pt.r });
+    for (const t of list) {
+      const prev = byId.get(t.id);
+      // la distance n'est fiable que depuis le centre de la zone
+      const item = pt.main ? t : { ...t, distance_km: null };
+      if (!prev || (prev.distance_km == null && item.distance_km != null)) byId.set(t.id, item);
+    }
+  }
+  const items = [...byId.values()].sort((a, b) => a.start.localeCompare(b.start) || a.name.localeCompare(b.name));
+  return { fetched_at: new Date().toISOString(), total: items.length, items };
+}
+
+const cachedSearch = unstable_cache(searchAll, ["fft-search-v2"], { revalidate: 6 * 3600 });
 const cachedFiche = unstable_cache(async (id: string) => parseTenupFiche(id, await tenup(`${API}/${encodeURIComponent(id)}/fiche-tournoi`, { method: "GET" })),
   ["fft-fiche-v1"], { revalidate: 12 * 3600 });
 
