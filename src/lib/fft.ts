@@ -15,6 +15,7 @@ export interface FftTournament {
   natures: FftNature[];
   levels: string[];      // P25, P100… déduits du libellé (complétés par la fiche)
   distance_km: number | null;
+  dept: string | null;   // n° de département, déduit du code club FFT (ex. 31)
   online: boolean;       // inscription en ligne possible
   url: string;           // page Ten'Up
 }
@@ -44,7 +45,32 @@ export function tenupUrl(id: string) {
 }
 
 const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
-const day = (v: unknown) => str(v).slice(0, 10);
+/** Date Ten'Up -> AAAA-MM-JJ (heure de Paris). Accepte AAAA-MM-JJ, ISO avec heure, JJ/MM/AAAA. */
+export function toDay(v: unknown): string {
+  const x = str(v);
+  if (!x) return "";
+  let m = x.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  if (/^\d{4}-\d{2}-\d{2}T.*(Z|[+-]\d{2}:?\d{2})$/.test(x)) {
+    const d = new Date(x);
+    if (!isNaN(d.getTime())) return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris" }).format(d);
+  }
+  m = x.match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : "";
+}
+const day = toDay;
+/** Département à partir du code club FFT (8 chiffres : ligue + département + n°) */
+export function deptFromClubCode(code: unknown): string | null {
+  const c = str(code);
+  if (!/^\d{8}$/.test(c)) return null;
+  const d = c.slice(2, 4);
+  return d === "00" ? null : d;
+}
+export function haversineKm(a: [number, number], b: [number, number]) {
+  const r = Math.PI / 180, dl = (b[0] - a[0]) * r, dg = (b[1] - a[1]) * r;
+  const h = Math.sin(dl / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dg / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(h));
+}
 
 /** Corps de la recherche Ten'Up (recherche publique, sans compte) */
 export function tenupSearchBody(q: FftQuery, from: number, size: number) {
@@ -65,10 +91,11 @@ export function parseTenupCards(data: unknown): { total: number; items: FftTourn
     const id = str(c.idHomologation);
     if (!id) continue;
     const name = str(c.libelleTournoi) || "Tournoi";
+    const club = (c.club as { libelle?: string; code?: string } | null) ?? {};
     const dist = typeof c.distance === "number" ? Math.round(c.distance / 100) / 10 : null;
     const natures = ((c.naturesEpreuves as unknown[]) ?? []).filter((n): n is FftNature => n === "DM" || n === "DD" || n === "DX");
     items.push({
-      id, name, club: str((c.club as { libelle?: string } | null)?.libelle), city: str(c.ville),
+      id, name, club: str(club.libelle), city: str(c.ville), dept: deptFromClubCode(club.code),
       start: day(c.dateDebut), end: day(c.dateFin) || day(c.dateDebut),
       natures: [...new Set(natures)], levels: levelsFromLabel(name), distance_km: dist,
       online: c.inscriptionEnLigne === true, url: tenupUrl(id),
@@ -117,3 +144,20 @@ export function searchPoints(lat: number, lng: number, radius: number) {
   }
   return pts;
 }
+
+export const DEPARTEMENTS: Record<string, string> = {
+  "01": "Ain", "02": "Aisne", "03": "Allier", "04": "Alpes-de-Haute-Provence", "05": "Hautes-Alpes", "06": "Alpes-Maritimes", "07": "Ardèche",
+  "08": "Ardennes", "09": "Ariège", "10": "Aube", "11": "Aude", "12": "Aveyron", "13": "Bouches-du-Rhône", "14": "Calvados", "15": "Cantal",
+  "16": "Charente", "17": "Charente-Maritime", "18": "Cher", "19": "Corrèze", "20": "Corse", "21": "Côte-d'Or", "22": "Côtes-d'Armor", "23": "Creuse",
+  "24": "Dordogne", "25": "Doubs", "26": "Drôme", "27": "Eure", "28": "Eure-et-Loir", "29": "Finistère", "30": "Gard", "31": "Haute-Garonne",
+  "32": "Gers", "33": "Gironde", "34": "Hérault", "35": "Ille-et-Vilaine", "36": "Indre", "37": "Indre-et-Loire", "38": "Isère", "39": "Jura",
+  "40": "Landes", "41": "Loir-et-Cher", "42": "Loire", "43": "Haute-Loire", "44": "Loire-Atlantique", "45": "Loiret", "46": "Lot",
+  "47": "Lot-et-Garonne", "48": "Lozère", "49": "Maine-et-Loire", "50": "Manche", "51": "Marne", "52": "Haute-Marne", "53": "Mayenne",
+  "54": "Meurthe-et-Moselle", "55": "Meuse", "56": "Morbihan", "57": "Moselle", "58": "Nièvre", "59": "Nord", "60": "Oise", "61": "Orne",
+  "62": "Pas-de-Calais", "63": "Puy-de-Dôme", "64": "Pyrénées-Atlantiques", "65": "Hautes-Pyrénées", "66": "Pyrénées-Orientales",
+  "67": "Bas-Rhin", "68": "Haut-Rhin", "69": "Rhône", "70": "Haute-Saône", "71": "Saône-et-Loire", "72": "Sarthe", "73": "Savoie",
+  "74": "Haute-Savoie", "75": "Paris", "76": "Seine-Maritime", "77": "Seine-et-Marne", "78": "Yvelines", "79": "Deux-Sèvres", "80": "Somme",
+  "81": "Tarn", "82": "Tarn-et-Garonne", "83": "Var", "84": "Vaucluse", "85": "Vendée", "86": "Vienne", "87": "Haute-Vienne", "88": "Vosges",
+  "89": "Yonne", "90": "Territoire de Belfort", "91": "Essonne", "92": "Hauts-de-Seine", "93": "Seine-Saint-Denis", "94": "Val-de-Marne",
+  "95": "Val-d'Oise",
+};

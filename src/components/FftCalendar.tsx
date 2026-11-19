@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { CalendarCheck, Check, ExternalLink, Info, MapPin, RefreshCw, Search, Settings2, Users } from "lucide-react";
 import * as hub from "@/lib/hub";
-import { FFT_NATURES, guessCategory, LEVEL_ORDER, type FftDetail, type FftNature, type FftTournament } from "@/lib/fft";
-import { fmtDate, timeAgo } from "@/lib/dates";
+import { DEPARTEMENTS, FFT_NATURES, guessCategory, LEVEL_ORDER, type FftDetail, type FftNature, type FftTournament } from "@/lib/fft";
+import { fmtDate, timeAgo, todayISO } from "@/lib/dates";
 import { useRole } from "@/lib/role";
 import type { PlayerStats } from "@/lib/types";
 import { Badge, Button, Card, Checkbox, cx, Empty, ErrorBox, errMsg, Field, Input, Modal, Select, Spinner, useToast } from "@/components/ui";
@@ -32,6 +32,8 @@ export function FftCalendarView({ mine, players, onAdded }: { mine: hub.Tourname
   const [q, setQ] = useState("");
   const [levels, setLevels] = useState<string[]>([]);
   const [nature, setNature] = useState<FftNature | "">("");
+  const [dept, setDept] = useState("");
+  const [maxKm, setMaxKm] = useState<number | null>(null);
   const [onlyMine, setOnlyMine] = useState(false);
   const [pick, setPick] = useState<FftTournament | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -52,14 +54,22 @@ export function FftCalendarView({ mine, players, onAdded }: { mine: hub.Tourname
   }, [months, tick]);
 
   const myIds = useMemo(() => new Set(mine.filter((t) => t.fft_id && t.status !== "cancelled").map((t) => t.fft_id!)), [mine]);
+  const zoneKm = cal?.zone?.radius_km ?? 150;
+  const km = maxKm == null || maxKm >= zoneKm ? null : maxKm;
+  const depts = useMemo(() => [...new Set((cal?.items ?? []).map((t) => t.dept).filter((d): d is string => !!d))].sort(), [cal]);
   const items = useMemo(() => {
     const s = q.trim().toLowerCase();
+    const today = todayISO();
     return (cal?.items ?? []).filter((t) =>
+      t.start >= today &&
       (!s || `${t.name} ${t.club} ${t.city}`.toLowerCase().includes(s)) &&
       (!levels.length || t.levels.some((l) => levels.includes(l))) &&
       (!nature || t.natures.includes(nature)) &&
-      (!onlyMine || (who[t.id]?.length ?? 0) > 0 || myIds.has(t.id)));
-  }, [cal, q, levels, nature, onlyMine, who, myIds]);
+      (!dept || t.dept === dept) &&
+      (km == null || (t.distance_km != null && t.distance_km <= km)) &&
+      (!onlyMine || (who[t.id]?.length ?? 0) > 0 || myIds.has(t.id)))
+      .sort((a, b) => a.start.localeCompare(b.start) || (a.distance_km ?? 999) - (b.distance_km ?? 999));
+  }, [cal, q, levels, nature, dept, km, onlyMine, who, myIds]);
 
   const byMonth = useMemo(() => {
     const m = new Map<string, FftTournament[]>();
@@ -87,7 +97,6 @@ export function FftCalendarView({ mine, players, onAdded }: { mine: hub.Tourname
       <Card className="flex flex-wrap items-center gap-x-4 gap-y-2 p-3 text-xs text-slate-500">
         <span className="inline-flex items-center gap-1"><Info className="size-3.5" />Source : Ten&apos;Up (FFT) · {cal?.zone?.label} + {cal?.zone?.radius_km} km</span>
         {cal?.fetched_at && <span>Mis à jour {timeAgo(cal.fetched_at)}</span>}
-        <span>{cal?.items?.length ?? 0} tournois</span>
         <span className="ml-auto flex items-center gap-2">
           {isCoach && <Button size="sm" variant="ghost" onClick={() => setShowSettings((v) => !v)}><Settings2 className="size-4" />Réglages</Button>}
           <Button size="sm" variant="ghost" onClick={() => setTick((x) => x + 1)} loading={loading}><RefreshCw className="size-4" />Actualiser</Button>
@@ -100,23 +109,48 @@ export function FftCalendarView({ mine, players, onAdded }: { mine: hub.Tourname
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Club, ville, nom du tournoi…" className="!pl-9" aria-label="Rechercher un tournoi" />
         </div>
-        <Select value={nature} onChange={(e) => setNature(e.target.value as FftNature | "")} className="!w-auto" aria-label="Tableau">
-          <option value="">Tous tableaux</option>
-          {Object.entries(FFT_NATURES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </Select>
+        {depts.length > 1 && (
+          <Select value={dept} onChange={(e) => setDept(e.target.value)} className="!w-auto" aria-label="Département">
+            <option value="">Tous départements</option>
+            {depts.map((d) => <option key={d} value={d}>{d} · {DEPARTEMENTS[d] ?? "Département " + d}</option>)}
+          </Select>
+        )}
         <Select value={months} onChange={(e) => setMonths(Number(e.target.value))} className="!w-auto" aria-label="Période">
           <option value={1}>1 mois</option><option value={3}>3 mois</option><option value={6}>6 mois</option>
         </Select>
       </div>
-      <div className="flex flex-wrap items-center gap-1.5">
-        {LEVEL_ORDER.slice(0, 6).map((l) => (
-          <button key={l} onClick={() => toggleLevel(l)} aria-pressed={levels.includes(l)}
-            className={cx("rounded-full px-3 py-1 text-xs font-semibold ring-1 transition", levels.includes(l) ? "bg-slate-900 text-white ring-slate-900" : "bg-white text-slate-600 ring-slate-200 hover:bg-slate-50")}>{l}</button>
-        ))}
-        <button onClick={() => setOnlyMine((v) => !v)} aria-pressed={onlyMine}
-          className={cx("ml-1 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ring-1 transition", onlyMine ? "bg-violet-600 text-white ring-violet-600" : "bg-white text-violet-700 ring-violet-200 hover:bg-violet-50")}>
-          <Users className="size-3.5" />{isCoach ? "Où jouent mes joueurs" : "Mon groupe y va"}</button>
-      </div>
+      <Card className="space-y-3 p-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="w-full text-xs font-medium text-slate-500 sm:mr-1 sm:w-20">Tableau</span>
+          {([["", "Tous"], ["DM", "Hommes"], ["DD", "Femmes"], ["DX", "Mixte"]] as const).map(([k, l]) => (
+            <button key={k || "all"} onClick={() => setNature(k)} aria-pressed={nature === k}
+              className={cx("rounded-full px-3 py-1 text-xs font-semibold ring-1 transition", nature === k ? "bg-violet-600 text-white ring-violet-600" : "bg-white text-slate-600 ring-slate-200 hover:bg-slate-50")}>{l}</button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="w-full text-xs font-medium text-slate-500 sm:mr-1 sm:w-20">Catégorie</span>
+          {LEVEL_ORDER.slice(0, 6).map((l) => (
+            <button key={l} onClick={() => toggleLevel(l)} aria-pressed={levels.includes(l)}
+              className={cx("rounded-full px-3 py-1 text-xs font-semibold ring-1 transition", levels.includes(l) ? "bg-slate-900 text-white ring-slate-900" : "bg-white text-slate-600 ring-slate-200 hover:bg-slate-50")}>{l}</button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <label htmlFor="fft-km" className="w-full text-xs font-medium text-slate-500 sm:w-20">Distance</label>
+          <input id="fft-km" type="range" min={10} max={zoneKm} step={5} value={km ?? zoneKm} onChange={(e) => setMaxKm(Number(e.target.value))}
+            className="min-w-[160px] flex-1 accent-violet-600" aria-label="Distance maximale en km" />
+          <span className="w-36 text-sm font-semibold tabular-nums text-slate-900">{km == null ? `Toute la zone (${zoneKm} km)` : `Jusqu'à ${km} km`}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={() => setOnlyMine((v) => !v)} aria-pressed={onlyMine}
+            className={cx("inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ring-1 transition", onlyMine ? "bg-violet-600 text-white ring-violet-600" : "bg-white text-violet-700 ring-violet-200 hover:bg-violet-50")}>
+            <Users className="size-3.5" />{isCoach ? "Où jouent mes joueurs" : "Mon groupe y va"}</button>
+          {(nature || levels.length > 0 || dept || km != null || onlyMine || q) && (
+            <button onClick={() => { setNature(""); setLevels([]); setDept(""); setMaxKm(null); setOnlyMine(false); setQ(""); }}
+              className="text-xs font-medium text-slate-500 underline-offset-2 hover:underline">Effacer les filtres</button>
+          )}
+          <span className="ml-auto text-xs text-slate-500">{items.length} tournoi{items.length > 1 ? "s" : ""} à venir</span>
+        </div>
+      </Card>
 
       {byMonth.length === 0 ? <Empty>Aucun tournoi ne correspond à ces critères.</Empty> : byMonth.map(([m, list]) => (
         <section key={m}>

@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
-import { parseTenupCards, parseTenupFiche, searchPoints, tenupSearchBody, type FftQuery, type FftTournament } from "@/lib/fft";
+import { haversineKm, parseTenupCards, parseTenupFiche, searchPoints, tenupSearchBody, type FftQuery, type FftTournament } from "@/lib/fft";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -66,11 +66,44 @@ async function searchAll(q: FftQuery) {
       if (!prev || (prev.distance_km == null && item.distance_km != null)) byId.set(t.id, item);
     }
   }
-  const items = [...byId.values()].sort((a, b) => a.start.localeCompare(b.start) || a.name.localeCompare(b.name));
+  const items = [...byId.values()];
+  await addDistances(items, [q.lat, q.lng]);
   return { fetched_at: new Date().toISOString(), total: items.length, items };
 }
 
-const cachedSearch = unstable_cache(searchAll, ["fft-search-v2"], { revalidate: 6 * 3600 });
+/* Distance depuis le centre de la zone pour TOUS les tournois : coordonnées de la ville
+   via le service public geo.api.gouv.fr (mis en cache 30 jours). */
+const cachedCity = unstable_cache(async (city: string, dept: string) => {
+  const u = new URL(`${(process.env.GEO_API_BASE || "https://geo.api.gouv.fr").replace(/\/$/, "")}/communes`);
+  u.searchParams.set("nom", city); u.searchParams.set("fields", "centre,codeDepartement"); u.searchParams.set("limit", "5");
+  if (dept) u.searchParams.set("codeDepartement", dept);
+  const r = await fetch(u, { cache: "no-store", signal: AbortSignal.timeout(6000) });
+  if (!r.ok) return null;
+  const list = (await r.json()) as { nom: string; centre?: { coordinates?: [number, number] } }[];
+  const norm = (x: string) => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+  const hit = list.find((c) => norm(c.nom) === norm(city)) ?? list[0];
+  const co = hit?.centre?.coordinates;
+  return co ? ([co[1], co[0]] as [number, number]) : null;
+}, ["fft-city-v1"], { revalidate: 30 * 24 * 3600 });
+
+async function addDistances(items: FftTournament[], center: [number, number]) {
+  const keys = [...new Set(items.filter((t) => t.city).map((t) => `${t.city}|${t.dept ?? ""}`))];
+  const pos = new Map<string, [number, number] | null>();
+  for (let i = 0; i < keys.length; i += 8) {
+    await Promise.all(keys.slice(i, i + 8).map(async (k) => {
+      const [city, dept] = k.split("|");
+      pos.set(k, await cachedCity(city, dept).catch(() => null));
+    }));
+  }
+  for (const t of items) {
+    const p = pos.get(`${t.city}|${t.dept ?? ""}`);
+    if (p) t.distance_km = Math.round(haversineKm(center, p) * 10) / 10;
+  }
+}
+
+const todayParis = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris" }).format(new Date());
+
+const cachedSearch = unstable_cache(searchAll, ["fft-search-v3"], { revalidate: 6 * 3600 });
 const cachedFiche = unstable_cache(async (id: string) => parseTenupFiche(id, await tenup(`${API}/${encodeURIComponent(id)}/fiche-tournoi`, { method: "GET" })),
   ["fft-fiche-v1"], { revalidate: 12 * 3600 });
 
@@ -102,7 +135,12 @@ export async function POST(req: NextRequest) {
       radius_km: settings.radius_km, from: iso(start), to: iso(end),
     };
     const res = await cachedSearch(q);
-    return NextResponse.json({ ...res, zone: { label: settings.center_label, radius_km: settings.radius_km }, months });
+    // jamais de tournoi déjà commencé, toujours dans l'ordre chronologique
+    const today = todayParis();
+    const items = res.items
+      .filter((t) => t.start >= today && (t.distance_km == null || t.distance_km <= settings.radius_km + 5))
+      .sort((a, b) => a.start.localeCompare(b.start) || (a.distance_km ?? 999) - (b.distance_km ?? 999) || a.name.localeCompare(b.name));
+    return NextResponse.json({ ...res, items, total: items.length, zone: { label: settings.center_label, radius_km: settings.radius_km }, months });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Erreur Ten'Up" }, { status: 502 });
   }
