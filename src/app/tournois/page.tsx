@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import {
   CalendarDays, CheckCheck, ChevronLeft, ChevronRight, ClipboardList, Handshake, LayoutDashboard, List, MapPin, Medal, MessageSquareText,
-  Plus, ThumbsUp, TriangleAlert, Sparkles, Trophy, Users,
+  Plus, Search, ThumbsUp, TriangleAlert, Sparkles, Trophy, Users,
 } from "lucide-react";
 import * as api from "@/lib/api";
 import * as hub from "@/lib/hub";
@@ -13,13 +13,14 @@ import { useAsync } from "@/lib/hooks";
 import { useRole } from "@/lib/role";
 import type { PlayerStats } from "@/lib/types";
 import { ConfirmModal } from "@/components/forms";
+import { FftCalendarView } from "@/components/FftCalendar";
 import { PhotoGrid, PhotoPicker } from "@/components/Photos";
 import {
   Badge, Button, Card, Checkbox, cx, Empty, ErrorBox, errMsg, Field, Input, Modal, PageHeader, Section, Select, Spinner, StatTile, Textarea, useToast,
 } from "@/components/ui";
 
 type T = hub.Tournament;
-type Tab = "dashboard" | "calendar" | "list" | "players" | "follow";
+type Tab = "dashboard" | "calendar" | "list" | "players" | "follow" | "fft";
 
 export default function TournamentsPage() {
   return <Suspense fallback={<Spinner />}><Tournaments /></Suspense>;
@@ -68,10 +69,12 @@ function Tournaments() {
     { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
     { id: "calendar", label: "Calendrier", icon: CalendarDays },
     { id: "list", label: "Liste", icon: List },
+    { id: "fft", label: "Tournois FFT", icon: Search },
     { id: "players", label: "Joueurs", icon: Users },
     { id: "follow", label: "Suivi à effectuer", icon: ClipboardList, count: followCount },
   ] : [
     { id: "list", label: "Mes tournois", icon: List },
+    { id: "fft", label: "Trouver un tournoi", icon: Search },
     { id: "calendar", label: "Calendrier", icon: CalendarDays },
   ];
 
@@ -142,6 +145,8 @@ function Tournaments() {
           {sorted.map((t) => <TournamentRow key={t.id} t={t} isCoach={isCoach} today={today} onClick={() => open(t)} onDebrief={() => setDebrief(t)} />)}
         </Card>
       ))}
+
+      {tab === "fft" && <FftCalendarView mine={list} players={data.players} onAdded={reload} />}
 
       {tab === "players" && isCoach && <PlayersView list={list} players={data.players} today={today} onPick={(pid) => { setFPlayer(pid); setPeriod("all"); setTab("list"); }} />}
 
@@ -312,6 +317,7 @@ function TournamentRow({ t, isCoach, today, onClick, onDebrief }: { t: T; isCoac
             {isCoach && <span className="font-medium text-slate-700">{t.player_first_name} {t.player_last_name}</span>}
             {(t.club || t.city) && <span className="inline-flex items-center gap-0.5"><MapPin className="size-3" />{[t.club, t.city].filter(Boolean).join(", ")}</span>}
             {t.partner_name && <span>avec {t.partner_name}</span>}
+            {t.fft_id && <span className="font-medium text-violet-700">Ten&apos;Up</span>}
           </div>
           <div className="mt-1 flex flex-wrap gap-1.5 text-[11px]">
             {t.coaching_status !== "none" && <span className={cx("inline-flex items-center gap-1 rounded px-1.5 py-0.5",
@@ -549,6 +555,7 @@ function TournamentDetail({ t, isCoach, today, onClose, onEdit, onDebrief, onCha
             {(t.club || t.city) && <><dt className="text-slate-500">Lieu</dt><dd>{[t.club, t.city].filter(Boolean).join(", ")}</dd></>}
             {t.partner_name && <><dt className="text-slate-500">Partenaire</dt><dd>{t.partner_name}</dd></>}
             {t.goal && <><dt className="text-slate-500">Objectif</dt><dd>{t.goal}</dd></>}
+            {t.fft_url && <><dt className="text-slate-500">Ten&apos;Up</dt><dd><a href={t.fft_url} target="_blank" rel="noopener noreferrer" className="font-medium text-violet-700 hover:underline">Fiche officielle du tournoi ↗</a></dd></>}
           </dl>
           {t.coaching_status !== "none" && (
             <div className="rounded-xl bg-violet-50 p-3">

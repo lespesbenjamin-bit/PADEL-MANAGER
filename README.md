@@ -13,6 +13,7 @@
 > | 008_padel_legends.sql | Padel Legends : XP, niveaux et mascottes, badges, séries, tournois validés, saisons et classements (moteur côté serveur) |
 > | 009_shop_coins.sql | Shop & Padel Coins : Coins gagnés sur les séances payées (règle des 5 %), boutique, commandes, stocks, budget |
 > | 010_legend_cards.sql | Padel Legends « La collection des 20 » : cartes à la place des mascottes (mêmes seuils, aucun XP modifié), favorite, partage, récompenses numériques. Annulation : `010_rollback_legend_cards.sql` |
+> | 011_fft_calendar.sql | Calendrier des tournois FFT (Ten'Up) : lien tournoi suivi ↔ fiche Ten'Up, réglages d'import du coach (zone, activer/couper), « qui de mon groupe y va ». Coupure d'urgence côté serveur : variable Vercel `FFT_IMPORT_DISABLED=1` |
 > | 004_tournament_debrief.sql | Débriefing des tournois (notes fond / devant / satisfaction, difficultés, points positifs) + retour du coach |
 > | 003_coach_hub_modules.sql | Tournois, communauté (+ stockage photos privé « community »), notifications, exercices, schémas tactiques, séances types, suppression de groupe, RGPD |
 >

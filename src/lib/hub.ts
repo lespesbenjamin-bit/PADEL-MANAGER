@@ -2,6 +2,7 @@
    bibliothèque (exercices, schémas), séances types, RGPD. */
 import { supabase } from "./supabase";
 import { check, rpc } from "./api";
+import type { FftDetail, FftTournament } from "./fft";
 
 /* ============================== Tournois ============================== */
 export type TournamentStatus = "considered" | "registered" | "confirmed" | "done" | "cancelled";
@@ -16,6 +17,7 @@ export interface Tournament {
   debrief_back_score: number | null; debrief_net_score: number | null; debrief_satisfaction: number | null;
   debrief_difficulties: string | null; debrief_positives: string | null; debrief_at: string | null;
   coach_feedback: string | null; coach_reviewed_at: string | null;
+  fft_id?: string | null; fft_url?: string | null;
   player_first_name?: string; player_last_name?: string; player_level?: string | null;
 }
 
@@ -350,3 +352,30 @@ export async function setFeedIncludeExternal(token: string, v: boolean) {
   return check(await supabase().from("calendar_feeds").update({ include_external: v }).eq("token", token));
 }
 export const feedUrl = (token: string) => `${window.location.origin}/api/agenda/${token}.ics`;
+
+/* ============================== Calendrier FFT (Ten'Up) ============================== */
+export interface FftSettings { enabled: boolean; center_label: string; lat: number; lng: number; radius_km: number }
+export interface FftCalendar {
+  disabled?: boolean; reason?: "server" | "coach";
+  fetched_at?: string; total?: number; items?: FftTournament[]; zone?: { label: string; radius_km: number }; months?: number;
+}
+
+async function callFft(body: object) {
+  const token = (await supabase().auth.getSession()).data.session?.access_token;
+  const r = await fetch("/api/fft-tournois", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error ?? `Erreur ${r.status}`);
+  return j;
+}
+export const getFftCalendar = (months = 3) => callFft({ months }) as Promise<FftCalendar>;
+export const getFftDetail = async (id: string) => ((await callFft({ ficheId: id })) as { detail: FftDetail }).detail;
+export async function getFftParticipants(ids: string[]): Promise<Record<string, string[]>> {
+  if (!ids.length) return {};
+  return (await rpc<Record<string, string[]>>("fft_participants", { p_ids: ids.slice(0, 500) })) ?? {};
+}
+export async function getFftSettings(): Promise<FftSettings | null> {
+  return (await rpc<FftSettings | null>("fft_my_settings", {})) ?? null;
+}
+export async function saveFftSettings(s: FftSettings) {
+  return rpc<FftSettings>("fft_save_settings", { p: s });
+}
