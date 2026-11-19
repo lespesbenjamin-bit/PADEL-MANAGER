@@ -1,4 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import "@fontsource-variable/inter";
+import "@fontsource/barlow-condensed/600.css";
+import "@fontsource/barlow-condensed/700.css";
+import "@fontsource/barlow-condensed/800.css";
 import "./globals.css";
 import { AppShell } from "@/components/AppShell";
 
@@ -9,7 +13,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "Coach Hub", statusBarStyle: "default" },
 };
 
-export const viewport: Viewport = { themeColor: "#7C3AED", width: "device-width", initialScale: 1, viewportFit: "cover" };
+export const viewport: Viewport = { themeColor: "#0B5CAD", width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

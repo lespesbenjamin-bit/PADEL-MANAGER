@@ -21,7 +21,7 @@ export function XpBar({ space, compact }: { space: Pick<L.PlayerSpace, "levels" 
   return (
     <div>
       <div className="h-2.5 w-full overflow-hidden rounded-full bg-violet-100">
-        <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-500" style={{ width: `${Math.max(2, Math.min(100, info.pct))}%` }} />
+        <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-ball transition-all duration-500" style={{ width: `${Math.max(2, Math.min(100, info.pct))}%` }} />
       </div>
       {!compact && (
         <div className="mt-1 flex justify-between gap-2 text-xs text-slate-500">
@@ -92,7 +92,7 @@ function LegendsHome({ space, onTab }: { space: L.PlayerSpace; onTab: (t: Legend
   const dark = card.rarity === "or" || card.rarity === "legendaire";
   return (
     <div className="space-y-4">
-      <Card className={cx("overflow-hidden p-5", dark ? "bg-gradient-to-br from-[#140a2a] via-[#2a1650] to-[#0b0614] text-white ring-violet-900" : "bg-gradient-to-br from-violet-50 via-white to-fuchsia-50")}>
+      <Card className={cx("overflow-hidden p-5", dark ? "bg-gradient-to-br from-[#0b1b2e] via-[#0b3f76] to-[#06101c] text-white ring-violet-900" : "bg-gradient-to-br from-violet-50 via-white to-fuchsia-50")}>
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
           <LegendCard card={card} size="lg" prestige={p.prestige} current />
           <div className="w-full min-w-0 flex-1 text-center sm:text-left">

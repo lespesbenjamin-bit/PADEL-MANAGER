@@ -64,7 +64,7 @@ export function WalletCard({ space, compact }: { space: S.ShopSpace; compact?: b
   const gain = useCoinGain(space.player.id, w.earned);
   const next = useMemo(() => nextReward(space), [space]);
   return (
-    <Card className="relative overflow-hidden bg-gradient-to-br from-violet-600 to-fuchsia-600 p-5 text-white ring-violet-600">
+    <Card className="relative overflow-hidden bg-gradient-to-br from-violet-600 to-violet-950 p-5 text-white ring-violet-600">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-xs font-semibold uppercase tracking-wide text-violet-100">Mes Padel Coins</div>

@@ -158,7 +158,7 @@ function Frame({ profile, children }: { profile: MyProfile; children: ReactNode 
 function SideLink({ n, active }: { n: NavItem; active: boolean }) {
   return (
     <Link href={n.href} className={cx("flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition",
-      active ? "bg-violet-50 text-violet-700" : "text-slate-600 hover:bg-slate-50")}>
+      active ? "bg-violet-50 text-violet-700 shadow-[inset_3px_0_0_var(--color-ball-dark)]" : "text-slate-600 hover:bg-slate-50")}>
       <n.icon className="size-[18px]" />
       <span className="flex-1">{n.label}</span>
       {n.step && <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">Bientôt</span>}
@@ -191,9 +191,9 @@ function initials(name: string | null) {
 export function Brand({ role, compact }: { role?: MyProfile["role"]; compact?: boolean }) {
   return (
     <Link href="/" className="flex items-center gap-2.5">
-      <div className="grid size-9 place-items-center rounded-xl bg-violet-600 text-sm font-bold text-white shadow-sm shadow-violet-600/30">PC</div>
+      <div className="grid size-9 place-items-center rounded-xl bg-violet-600 font-display text-base text-ball shadow-sm shadow-violet-600/30">PC</div>
       <div className="leading-tight">
-        <div className="text-sm font-semibold text-slate-900">Padel Coach Hub</div>
+        <div className="font-display text-lg leading-5 text-slate-900">Padel Coach Hub</div>
         {!compact && <div className="text-xs text-slate-500">{role === "player" ? "Espace joueur" : "by Ben · Coach padel"}</div>}
       </div>
     </Link>
@@ -292,7 +292,7 @@ function Login() {
     <div className="flex min-h-dvh items-center justify-center bg-gradient-to-b from-violet-50 to-slate-50 px-4">
       <Card className="w-full max-w-sm p-6">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-3 grid size-12 place-items-center rounded-2xl bg-violet-600 font-bold text-white">PC</div>
+          <div className="mb-3 grid size-12 place-items-center rounded-2xl bg-violet-600 font-display text-xl text-ball">PC</div>
           <h1 className="text-lg font-semibold">Padel Coach Hub</h1>
           <p className="text-sm text-slate-500">Entraînements, tournois et communauté</p>
         </div>

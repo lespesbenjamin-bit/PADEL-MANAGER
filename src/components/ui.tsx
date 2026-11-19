@@ -54,7 +54,7 @@ export function Progress({ value, className, color }: { value: number; className
   const v = Math.max(0, Math.min(100, value || 0));
   return (
     <div className={cx("h-2 w-full overflow-hidden rounded-full bg-slate-100", className)}>
-      <div className="h-full rounded-full transition-all" style={{ width: `${v}%`, background: color ?? "#7C3AED" }} />
+      <div className="h-full rounded-full transition-all" style={{ width: `${v}%`, background: color ?? "#0B5CAD" }} />
     </div>
   );
 }

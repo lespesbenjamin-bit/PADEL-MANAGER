@@ -1,14 +1,58 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------
+   Charte « Court Bleu » : bleu terrain, jaune balle, encre marine.
+   La teinte d'accent de l'app (classes violet-*) est remappée sur le
+   bleu terrain, et les neutres (slate-*) sur des gris bleutés.
+------------------------------------------------------------------- */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Barlow Condensed", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-violet-50: #eef5fc;
+  --color-violet-100: #d9e8f7;
+  --color-violet-200: #b5d1ef;
+  --color-violet-300: #85b3e3;
+  --color-violet-400: #4e8ed3;
+  --color-violet-500: #2272c2;
+  --color-violet-600: #0b5cad;
+  --color-violet-700: #0a4e93;
+  --color-violet-800: #0b3f76;
+  --color-violet-900: #0d3460;
+  --color-violet-950: #0b1b2e;
+
+  --color-slate-50: #f3f6fa;
+  --color-slate-100: #e8eef5;
+  --color-slate-200: #d5dee9;
+  --color-slate-300: #b4c1d1;
+  --color-slate-400: #8291a5;
+  --color-slate-500: #5f6f84;
+  --color-slate-600: #4b5b70;
+  --color-slate-700: #364559;
+  --color-slate-800: #1f2e42;
+  --color-slate-900: #0b1b2e;
+  --color-slate-950: #06101c;
+
+  --color-ball: #d9f23c;
+  --color-ball-dark: #b8d11a;
 }
+
+/* Titres : capitales condensées, façon tableau d'affichage */
+h1, .font-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+h1.text-2xl { font-size: 1.875rem; line-height: 2.1rem; }
+h1.text-xl, h1.text-lg { font-size: 1.5rem; line-height: 1.8rem; }
+h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.01em; }
 
 html { -webkit-tap-highlight-color: transparent; }
 body { @apply bg-slate-50 text-slate-900 antialiased; }
 input[type="date"], input[type="time"] { min-height: 2.5rem; }
 .scrollbar-thin::-webkit-scrollbar { height: 6px; width: 6px; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #b4c1d1; border-radius: 9999px; }
 
 /* ------------------------------------------------------------------
    Mode sombre : inversion de la palette neutre + teintes adaptées.
@@ -16,23 +60,26 @@ input[type="date"], input[type="time"] { min-height: 2.5rem; }
 ------------------------------------------------------------------- */
 .dark {
   color-scheme: dark;
-  --color-slate-50: #0b1020;
-  --color-slate-100: #1a2234;
-  --color-slate-200: #2a3447;
-  --color-slate-300: #3b475d;
-  --color-slate-400: #64748b;
-  --color-slate-500: #94a3b8;
-  --color-slate-600: #b6c2d3;
-  --color-slate-700: #d5dde8;
-  --color-slate-800: #e8edf4;
-  --color-slate-900: #f4f7fb;
-  --color-violet-50: #22184a;
-  --color-violet-100: #2e1f63;
-  --color-violet-200: #4c2f99;
-  --color-violet-700: #c4b5fd;
-  --color-violet-800: #ddd6fe;
-  --color-violet-900: #ede9fe;
-  --color-violet-950: #f5f3ff;
+  --color-slate-50: #07111d;
+  --color-slate-100: #12203a;
+  --color-slate-200: #1f304a;
+  --color-slate-300: #34486a;
+  --color-slate-400: #64799a;
+  --color-slate-500: #94a6c0;
+  --color-slate-600: #b6c4d6;
+  --color-slate-700: #d5dee9;
+  --color-slate-800: #e8eef5;
+  --color-slate-900: #f3f6fa;
+  --color-violet-50: #0c2140;
+  --color-violet-100: #10294f;
+  --color-violet-200: #1a3d73;
+  --color-violet-300: #2a5c9e;
+  --color-violet-500: #3b8ad8;
+  --color-violet-600: #1f73c9;
+  --color-violet-700: #8ec0f0;
+  --color-violet-800: #b9d8f6;
+  --color-violet-900: #dcebfb;
+  --color-violet-950: #eef5fc;
   --color-emerald-50: #0b2a1f;
   --color-emerald-200: #14532d;
   --color-emerald-700: #6ee7b7;
@@ -51,14 +98,14 @@ input[type="date"], input[type="time"] { min-height: 2.5rem; }
   --color-sky-200: #0c4a6e;
   --color-sky-700: #7dd3fc;
 }
-.dark .bg-white { background-color: #111827; }
-.dark .bg-white\/60 { background-color: rgb(17 24 39 / 0.6); }
-.dark .bg-white\/85 { background-color: rgb(17 24 39 / 0.85); }
-.dark .bg-white\/95 { background-color: rgb(17 24 39 / 0.95); }
-.dark .bg-slate-900 { background-color: #e2e8f0; color: #0f172a; }
+.dark .bg-white { background-color: #0e1a2b; }
+.dark .bg-white\/60 { background-color: rgb(14 26 43 / 0.6); }
+.dark .bg-white\/85 { background-color: rgb(14 26 43 / 0.85); }
+.dark .bg-white\/95 { background-color: rgb(14 26 43 / 0.95); }
+.dark .bg-slate-900 { background-color: #e8eef5; color: #0b1b2e; }
 .dark .bg-slate-900\/40, .dark .bg-slate-900\/70 { background-color: rgb(0 0 0 / 0.6); }
-.dark .ring-slate-900 { --tw-ring-color: #e2e8f0; }
-.dark .from-violet-50 { --tw-gradient-from: #160f33; }
+.dark .ring-slate-900 { --tw-ring-color: #e8eef5; }
+.dark .from-violet-50 { --tw-gradient-from: #0a1a33; }
 .dark .shadow-sm, .dark .shadow-md, .dark .shadow-lg, .dark .shadow-xl, .dark .shadow-2xl { --tw-shadow-color: rgb(0 0 0 / 0.5); }
 
 @media print {
